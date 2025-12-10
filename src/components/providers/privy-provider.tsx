@@ -1,56 +1,29 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
+import { PrivyProvider, usePrivy as usePrivyOriginal } from "@privy-io/react-auth";
 
-interface AuthContextType {
-  authenticated: boolean;
-  ready: boolean;
-  user: { email?: { address: string } } | null;
-  login: () => void;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthContextType>({
-  authenticated: false,
-  ready: false,
-  user: null,
-  login: () => {},
-  logout: () => {},
-});
-
-export function usePrivy() {
-  return useContext(AuthContext);
-}
-
-export function PrivyAuthProvider({ children }: { children: ReactNode }) {
-  const [authenticated, setAuthenticated] = useState(false);
-  const [ready, setReady] = useState(false);
-
-  // Simulate ready state after mount
-  useEffect(() => {
-    const timer = setTimeout(() => setReady(true), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const login = useCallback(() => {
-    setAuthenticated(true);
-  }, []);
-
-  const logout = useCallback(() => {
-    setAuthenticated(false);
-  }, []);
-
+export function PrivyAuthProvider({ children }: { children: React.ReactNode }) {
   return (
-    <AuthContext.Provider
-      value={{
-        authenticated,
-        ready,
-        user: authenticated ? { email: { address: "demo@vault.app" } } : null,
-        login,
-        logout,
+    <PrivyProvider
+      appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || "cmiz1n2m002rnjr0cbq7xlhml"}
+      config={{
+        loginMethods: ["email"],
+        appearance: {
+          theme: "light",
+          accentColor: "#8B7EC8",
+          logo: undefined,
+        },
+        embeddedWallets: {
+          ethereum: {
+            createOnLogin: "users-without-wallets",
+          },
+        },
       }}
     >
       {children}
-    </AuthContext.Provider>
+    </PrivyProvider>
   );
 }
+
+// Re-export usePrivy for convenience
+export const usePrivy = usePrivyOriginal;

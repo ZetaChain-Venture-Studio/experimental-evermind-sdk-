@@ -44,6 +44,8 @@ export default function JournalPage() {
     insights,
     currentStreak,
     totalCheckIns,
+    hasEncryptionKey,
+    generateEncryptionKey,
   } = useSolace();
 
   // Redirect if not authenticated
