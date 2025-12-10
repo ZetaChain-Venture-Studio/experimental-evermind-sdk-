@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useMemo, useEffect } from "react";
-import { useChat, useMemory, useEncryption } from "@reverbia/sdk/react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
 const VAULT_COMPANION_PROMPT = `You are a thoughtful AI journal companion inside a private, encrypted vault.
 Your role is to help the user process their thoughts and emotions.
@@ -61,157 +60,105 @@ export interface UseVaultReturn {
   analyzePatterns: () => Promise<void>;
 }
 
+// Mock responses for demo purposes
+const mockResponses = [
+  "That's a thoughtful reflection. What made you think about this today?",
+  "I hear you. It sounds like this has been on your mind. Can you tell me more about how it makes you feel?",
+  "Thank you for sharing that with me. This vault is a safe space for these thoughts. What would help you process this further?",
+  "I notice you've been reflecting on similar themes lately. Do you see any patterns emerging?",
+  "That's an important insight. How does recognizing this change how you feel about the situation?",
+];
+
 export function useVault(options: UseVaultOptions = {}): UseVaultReturn {
   const [messages, setMessages] = useState<VaultMessage[]>([]);
-  const [entries, setEntries] = useState<VaultEntry[]>([]);
+  const [entries, setEntries] = useState<VaultEntry[]>([
+    {
+      id: "entry-1",
+      date: new Date(Date.now() - 86400000),
+      preview: "Reflecting on my goals for this week...",
+      messageCount: 4,
+    },
+    {
+      id: "entry-2",
+      date: new Date(Date.now() - 172800000),
+      preview: "Had an interesting conversation today...",
+      messageCount: 6,
+    },
+  ]);
   const [patterns, setPatterns] = useState<PatternInsight[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasEncryptionKey, setHasEncryptionKey] = useState(false);
   const messageIdRef = useRef(0);
 
-  // SDK hooks
-  const {
-    messages: chatMessages,
-    sendMessage: sdkSendMessage,
-    isLoading,
-    clearMessages: sdkClearMessages,
-  } = useChat({
-    model: "gpt-4o",
-    systemPrompt: VAULT_COMPANION_PROMPT,
-  });
-
-  const {
-    memories,
-    extractMemoriesFromMessage,
-    searchMemories,
-    clearAllMemories,
-  } = useMemory({
-    namespace: "vault",
-  });
-
-  const {
-    hasEncryptionKey,
-    generateEncryptionKey: sdkGenerateKey,
-    encryptData,
-    decryptData,
-  } = useEncryption();
-
-  // Convert SDK messages to vault messages
-  useEffect(() => {
-    const vaultMessages: VaultMessage[] = chatMessages.map((msg, i) => ({
-      id: `msg-${i}`,
-      role: msg.role as "user" | "assistant",
-      content: typeof msg.content === "string" ? msg.content : "",
-      timestamp: Date.now() - (chatMessages.length - i) * 1000,
-    }));
-    setMessages(vaultMessages);
-  }, [chatMessages]);
-
   const generateEncryptionKey = useCallback(async () => {
-    await sdkGenerateKey();
-  }, [sdkGenerateKey]);
+    // Simulate key generation
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setHasEncryptionKey(true);
+  }, []);
 
-  const sendMessage = useCallback(
-    async (content: string) => {
-      // Send to chat
-      await sdkSendMessage(content);
+  const sendMessage = useCallback(async (content: string) => {
+    const userMessageId = `msg-${++messageIdRef.current}`;
+    const userMessage: VaultMessage = {
+      id: userMessageId,
+      role: "user",
+      content,
+      timestamp: Date.now(),
+    };
 
-      // Extract memories from the conversation
-      // Get the last assistant message for context
-      const lastAssistantMsg = chatMessages
-        .filter((m) => m.role === "assistant")
-        .pop();
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
 
-      if (lastAssistantMsg) {
-        try {
-          await extractMemoriesFromMessage(
-            content,
-            typeof lastAssistantMsg.content === "string"
-              ? lastAssistantMsg.content
-              : ""
-          );
-        } catch (error) {
-          console.error("Memory extraction failed:", error);
-        }
-      }
-    },
-    [sdkSendMessage, chatMessages, extractMemoriesFromMessage]
-  );
+    // Simulate AI response delay
+    await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 1000));
+
+    const assistantMessageId = `msg-${++messageIdRef.current}`;
+    const responseIndex = Math.floor(Math.random() * mockResponses.length);
+    const assistantMessage: VaultMessage = {
+      id: assistantMessageId,
+      role: "assistant",
+      content: mockResponses[responseIndex],
+      timestamp: Date.now(),
+    };
+
+    setMessages((prev) => [...prev, assistantMessage]);
+    setIsLoading(false);
+  }, []);
 
   const clearMessages = useCallback(() => {
-    sdkClearMessages();
     setMessages([]);
-  }, [sdkClearMessages]);
+  }, []);
 
   const analyzePatterns = useCallback(async () => {
-    try {
-      // Search for emotional content
-      const emotionalMemories = await searchMemories(
-        "stressed anxious happy sad worried excited angry frustrated calm peaceful",
-        { limit: 50 }
-      );
+    // Simulate pattern analysis
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // Analyze patterns from memories
-      const patternMap = new Map<string, number>();
+    setPatterns([
+      {
+        id: "pattern-1",
+        title: "Mentions of reflection",
+        description: "You've been reflecting more frequently lately.",
+        trend: "up",
+        frequency: 5,
+      },
+      {
+        id: "pattern-2",
+        title: "Growth mindset",
+        description: "Your entries show increasing self-awareness.",
+        trend: "up",
+        frequency: 3,
+      },
+    ]);
+  }, []);
 
-      emotionalMemories.forEach((memory) => {
-        const lowerValue = memory.value.toLowerCase();
-
-        // Count emotional mentions
-        const emotions = [
-          "stress",
-          "anxiety",
-          "happy",
-          "sad",
-          "worried",
-          "excited",
-          "angry",
-          "frustrated",
-          "calm",
-          "peaceful",
-        ];
-
-        emotions.forEach((emotion) => {
-          if (lowerValue.includes(emotion)) {
-            patternMap.set(
-              emotion,
-              (patternMap.get(emotion) || 0) + 1
-            );
-          }
-        });
-      });
-
-      // Convert to pattern insights
-      const insights: PatternInsight[] = Array.from(patternMap.entries())
-        .filter(([_, count]) => count >= 2)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([emotion, count], index) => ({
-          id: `pattern-${index}`,
-          title: `Mentions of "${emotion}"`,
-          description: `You've mentioned feeling ${emotion} ${count} times recently.`,
-          trend: count > 3 ? "up" : "stable",
-          frequency: count,
-        }));
-
-      setPatterns(insights);
-    } catch (error) {
-      console.error("Pattern analysis failed:", error);
-    }
-  }, [searchMemories]);
-
-  // Load entries from memories on mount
+  // Auto-generate encryption key after mount
   useEffect(() => {
-    const loadedEntries: VaultEntry[] = memories
-      .filter((m) => m.type === "identity" || m.type === "preference")
-      .slice(0, 10)
-      .map((m, i) => ({
-        id: `entry-${i}`,
-        date: new Date(m.createdAt || Date.now()),
-        preview: m.value.substring(0, 100) + "...",
-        messageCount: 1,
-      }));
-
-    setEntries(loadedEntries);
-  }, [memories]);
+    if (!hasEncryptionKey) {
+      const timer = setTimeout(() => {
+        setHasEncryptionKey(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [hasEncryptionKey]);
 
   return {
     messages,
