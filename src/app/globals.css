@@ -1,42 +1,51 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* ================================================
    VAULT Design System - Encrypted AI Journal
    Protective, solid, trustworthy, luxurious
    ================================================ */
 
-@theme inline {
+:root {
   --radius: 0.75rem;
 
   /* Deep forest green palette */
-  --color-background: 160 27% 4%;
-  --color-foreground: 30 10% 96%;
+  --background: 160 27% 4%;
+  --foreground: 30 10% 96%;
 
-  --color-card: 160 35% 8%;
-  --color-card-foreground: 30 10% 96%;
+  --card: 160 35% 8%;
+  --card-foreground: 30 10% 96%;
 
-  --color-popover: 160 35% 6%;
-  --color-popover-foreground: 30 10% 96%;
+  --popover: 160 35% 6%;
+  --popover-foreground: 30 10% 96%;
 
   /* Gold accent - trustworthy, luxurious */
-  --color-primary: 43 74% 52%;
-  --color-primary-foreground: 160 27% 4%;
+  --primary: 43 74% 52%;
+  --primary-foreground: 160 27% 4%;
 
-  --color-secondary: 160 25% 12%;
-  --color-secondary-foreground: 30 10% 90%;
+  --secondary: 160 25% 12%;
+  --secondary-foreground: 30 10% 90%;
 
-  --color-muted: 160 20% 15%;
-  --color-muted-foreground: 30 5% 55%;
+  --muted: 160 20% 15%;
+  --muted-foreground: 30 5% 55%;
 
-  --color-accent: 43 74% 52%;
-  --color-accent-foreground: 160 27% 4%;
+  --accent: 43 74% 52%;
+  --accent-foreground: 160 27% 4%;
 
-  --color-destructive: 0 62% 50%;
-  --color-destructive-foreground: 30 10% 96%;
+  --destructive: 0 62% 50%;
+  --destructive-foreground: 30 10% 96%;
 
-  --color-border: 160 20% 18%;
-  --color-input: 160 20% 18%;
-  --color-ring: 43 74% 52%;
+  --border: 160 20% 18%;
+  --input: 160 20% 18%;
+  --ring: 43 74% 52%;
+
+  /* Vault specific colors */
+  --vault-gold: 43 74% 52%;
+  --vault-green-deep: 160 27% 4%;
+  --vault-green-darker: 160 35% 3%;
+  --vault-steel: 0 0% 40%;
+  --vault-steel-dark: 0 0% 30%;
 }
 
 /* Base styles */
@@ -46,8 +55,8 @@ html {
 
 body {
   font-family: var(--font-sans), system-ui, sans-serif;
-  background-color: hsl(var(--color-background));
-  color: hsl(var(--color-foreground));
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -202,7 +211,7 @@ body {
 .gold-border {
   border: 1px solid transparent;
   background:
-    linear-gradient(hsl(var(--color-card)), hsl(var(--color-card))) padding-box,
+    linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
     linear-gradient(135deg, #D4AF37, #E5C158, #D4AF37) border-box;
 }
 
@@ -262,16 +271,16 @@ body {
   gap: 0.5rem;
   padding: 0.875rem 1.5rem;
   background: transparent;
-  color: hsl(var(--color-foreground));
+  color: hsl(var(--foreground));
   font-weight: 400;
   letter-spacing: 0.025em;
-  border: 1px solid hsl(var(--color-border));
+  border: 1px solid hsl(var(--border));
   border-radius: 0.5rem;
   transition: all 0.3s ease;
 }
 
 .btn-secondary:hover {
-  background: hsl(var(--color-muted));
+  background: hsl(var(--muted));
   border-color: hsl(43 74% 52% / 0.3);
 }
 
@@ -284,5 +293,5 @@ body {
 /* Selection color */
 ::selection {
   background: hsl(43 74% 52% / 0.3);
-  color: hsl(var(--color-foreground));
+  color: hsl(var(--foreground));
 }
