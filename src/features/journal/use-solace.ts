@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useChat, useMemory, useEncryption } from "@reverbia/sdk/react";
+import { usePrivy } from "@privy-io/react-auth";
 
 export type MoodType = "joy" | "calm" | "sad" | "anxious" | "angry" | "neutral";
 
@@ -92,26 +93,38 @@ function detectMood(text: string): MoodType {
 }
 
 export function useSolace(): UseSolaceReturn {
-  const [solaceMessages, setSolaceMessages] = useState<SolaceMessage[]>([]);
+  const [messages, setMessages] = useState<SolaceMessage[]>([]);
+  const [streamingContent, setStreamingContent] = useState("");
+  const [storedMemories, setStoredMemories] = useState<Array<{ value: string; createdAt?: number }>>([]);
   const messageIdRef = useRef(0);
 
-  // SDK hooks
+  const { getAccessToken } = usePrivy();
+
+  // SDK hooks with proper configuration
   const {
-    messages: chatMessages,
-    sendMessage: sdkSendMessage,
     isLoading,
-    clearMessages: sdkClearMessages,
+    sendMessage: sdkSendMessage,
+    stop,
   } = useChat({
-    model: "gpt-4o",
-    systemPrompt: SOLACE_SYSTEM_PROMPT,
+    baseUrl: "https://api.reverbia.ai",
+    getToken: async () => {
+      const token = await getAccessToken();
+      return token || "";
+    },
   });
 
   const {
-    memories,
     extractMemoriesFromMessage,
     searchMemories,
   } = useMemory({
-    namespace: "solace-mood",
+    completionsModel: "gpt-4o",
+    embeddingModel: "text-embedding-3-small",
+    generateEmbeddings: true,
+    baseUrl: "https://api.reverbia.ai",
+    getToken: async () => {
+      const token = await getAccessToken();
+      return token || "";
+    },
   });
 
   const {
@@ -119,60 +132,124 @@ export function useSolace(): UseSolaceReturn {
     generateEncryptionKey: sdkGenerateKey,
   } = useEncryption();
 
-  // Convert SDK messages to Solace messages
-  useEffect(() => {
-    const converted: SolaceMessage[] = chatMessages.map((msg, i) => ({
-      id: `msg-${i}`,
-      role: msg.role as "user" | "assistant",
-      content: typeof msg.content === "string" ? msg.content : "",
-      timestamp: Date.now() - (chatMessages.length - i) * 1000,
-      detectedMood: msg.role === "user" ? detectMood(typeof msg.content === "string" ? msg.content : "") : undefined,
-    }));
-    setSolaceMessages(converted);
-  }, [chatMessages]);
-
-  // Send initial greeting if no messages
-  useEffect(() => {
-    if (chatMessages.length === 0 && !isLoading) {
-      // The SDK will handle the initial message via system prompt
-    }
-  }, [chatMessages.length, isLoading]);
-
   const generateEncryptionKey = useCallback(async () => {
-    await sdkGenerateKey();
+    try {
+      await sdkGenerateKey();
+    } catch (error) {
+      console.error("Failed to generate encryption key:", error);
+    }
   }, [sdkGenerateKey]);
 
-  const sendMessage = useCallback(async (content: string) => {
-    // Send to chat
-    await sdkSendMessage(content);
-
-    // Extract memories for mood tracking
-    try {
-      const detectedMood = detectMood(content);
-      // Extract any emotional content as memories
-      if (detectedMood !== "neutral") {
-        await extractMemoriesFromMessage(
-          content,
-          `User expressed feeling ${detectedMood}`
-        );
-      }
-    } catch (error) {
-      console.error("Memory extraction failed:", error);
+  // Add initial greeting
+  useEffect(() => {
+    if (messages.length === 0) {
+      const greeting: SolaceMessage = {
+        id: `msg-${++messageIdRef.current}`,
+        role: "assistant",
+        content: "Hello, I'm here for you. How are you feeling today? Take your time - there's no rush.",
+        timestamp: Date.now(),
+      };
+      setMessages([greeting]);
     }
-  }, [sdkSendMessage, extractMemoriesFromMessage]);
+  }, []);
+
+  const sendMessage = useCallback(async (content: string) => {
+    const detectedMood = detectMood(content);
+
+    // Add user message
+    const userMessage: SolaceMessage = {
+      id: `msg-${++messageIdRef.current}`,
+      role: "user",
+      content,
+      timestamp: Date.now(),
+      detectedMood,
+    };
+    setMessages(prev => [...prev, userMessage]);
+
+    // Prepare messages for API
+    const chatHistory = messages.map(m => ({
+      role: m.role as "user" | "assistant" | "system",
+      content: m.content,
+    }));
+
+    // Add system prompt
+    const apiMessages = [
+      { role: "system" as const, content: SOLACE_SYSTEM_PROMPT },
+      ...chatHistory,
+      { role: "user" as const, content },
+    ];
+
+    // Create placeholder for assistant response
+    const assistantMessageId = `msg-${++messageIdRef.current}`;
+    setStreamingContent("");
+
+    try {
+      await sdkSendMessage(
+        {
+          messages: apiMessages,
+          model: "gpt-4o",
+        },
+        {
+          onData: (chunk: string) => {
+            setStreamingContent(prev => prev + chunk);
+          },
+          onFinish: (response: { choices: Array<{ message: { content: string } }> }) => {
+            const finalContent = response.choices?.[0]?.message?.content || streamingContent;
+            const assistantMessage: SolaceMessage = {
+              id: assistantMessageId,
+              role: "assistant",
+              content: finalContent,
+              timestamp: Date.now(),
+            };
+            setMessages(prev => [...prev, assistantMessage]);
+            setStreamingContent("");
+
+            // Extract memories in background
+            if (detectedMood !== "neutral") {
+              extractMemoriesFromMessage({
+                messages: [
+                  { role: "user", content },
+                  { role: "assistant", content: finalContent },
+                ],
+                model: "gpt-4o",
+              }).then((memories) => {
+                if (memories && memories.length > 0) {
+                  setStoredMemories(prev => [...prev, ...memories.map((m: { value: string }) => ({
+                    value: m.value,
+                    createdAt: Date.now(),
+                  }))]);
+                }
+              }).catch(console.error);
+            }
+          },
+          onError: (error: Error) => {
+            console.error("Chat error:", error);
+            const errorMessage: SolaceMessage = {
+              id: assistantMessageId,
+              role: "assistant",
+              content: "I'm having trouble connecting right now. Please try again in a moment.",
+              timestamp: Date.now(),
+            };
+            setMessages(prev => [...prev, errorMessage]);
+            setStreamingContent("");
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Send message error:", error);
+    }
+  }, [messages, sdkSendMessage, extractMemoriesFromMessage, streamingContent]);
 
   const clearMessages = useCallback(() => {
-    sdkClearMessages();
-    setSolaceMessages([]);
-  }, [sdkClearMessages]);
+    setMessages([]);
+    setStreamingContent("");
+  }, []);
 
-  // Build mood entries from memories
+  // Build mood entries from stored memories
   const entries: MoodEntry[] = useMemo(() => {
-    return memories
-      .filter(m => m.value.includes("feeling") || m.type === "identity")
+    return storedMemories
       .slice(0, 10)
       .map((m, i) => {
-        // Try to detect mood from memory content
         let mood: MoodType = "neutral";
         const lowerValue = m.value.toLowerCase();
         if (lowerValue.includes("happy") || lowerValue.includes("joy") || lowerValue.includes("good")) mood = "joy";
@@ -189,7 +266,7 @@ export function useSolace(): UseSolaceReturn {
           messageCount: 1,
         };
       });
-  }, [memories]);
+  }, [storedMemories]);
 
   // Calculate mood statistics
   const moodStats: MoodStatistic[] = useMemo(() => {
@@ -212,12 +289,11 @@ export function useSolace(): UseSolaceReturn {
       .sort((a, b) => b.count - a.count);
   }, [entries]);
 
-  // Generate insights from memories
+  // Generate insights
   const insights: Insight[] = useMemo(() => {
     const result: Insight[] = [];
 
-    // Check for repeated themes
-    const anxietyCount = memories.filter(m =>
+    const anxietyCount = storedMemories.filter(m =>
       m.value.toLowerCase().includes("stress") ||
       m.value.toLowerCase().includes("anxious") ||
       m.value.toLowerCase().includes("worried")
@@ -228,13 +304,13 @@ export function useSolace(): UseSolaceReturn {
         id: "insight-anxiety",
         type: "observation",
         title: "Stress patterns",
-        description: `You've mentioned stress or anxiety ${anxietyCount} times recently. Would you like to explore some calming techniques?`,
+        description: `You've mentioned stress or anxiety ${anxietyCount} times recently.`,
         mood: "anxious",
         date: new Date(),
       });
     }
 
-    const joyCount = memories.filter(m =>
+    const joyCount = storedMemories.filter(m =>
       m.value.toLowerCase().includes("happy") ||
       m.value.toLowerCase().includes("grateful") ||
       m.value.toLowerCase().includes("joy")
@@ -245,31 +321,37 @@ export function useSolace(): UseSolaceReturn {
         id: "insight-joy",
         type: "pattern",
         title: "Positive moments",
-        description: `You've shared ${joyCount} positive experiences. What do these moments have in common?`,
+        description: `You've shared ${joyCount} positive experiences.`,
         mood: "joy",
         date: new Date(),
       });
     }
 
-    // Add streak insight
     if (entries.length >= 3) {
       result.push({
         id: "insight-streak",
         type: "streak",
         title: "Building awareness",
-        description: `You've had ${entries.length} check-ins. Consistency is key to understanding your patterns.`,
+        description: `You've had ${entries.length} check-ins. Keep it up!`,
         date: new Date(),
       });
     }
 
     return result;
-  }, [memories, entries]);
+  }, [storedMemories, entries]);
 
   const currentStreak = entries.length;
-  const totalCheckIns = memories.length;
+  const totalCheckIns = storedMemories.length;
 
   return {
-    messages: solaceMessages,
+    messages: streamingContent
+      ? [...messages, {
+          id: "streaming",
+          role: "assistant" as const,
+          content: streamingContent,
+          timestamp: Date.now(),
+        }]
+      : messages,
     isLoading,
     sendMessage,
     clearMessages,
@@ -278,7 +360,7 @@ export function useSolace(): UseSolaceReturn {
     insights,
     currentStreak,
     totalCheckIns,
-    hasEncryptionKey,
+    hasEncryptionKey: hasEncryptionKey ?? false,
     generateEncryptionKey,
   };
 }
