@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useChat, useMemory } from "@reverbia/sdk/react";
-import { usePrivy } from "@privy-io/react-auth";
+import { useIdentityToken } from "@privy-io/react-auth";
 
 const API_BASE_URL = "https://ai-portal-dev.zetachain.com";
 
@@ -117,16 +117,13 @@ export function useSolace(): UseSolaceReturn {
   const messageIdRef = useRef(0);
   const [streamingContent, setStreamingContent] = useState("");
 
-  const { getAccessToken } = usePrivy();
+  // Use identity token (not access token) - this is what the ZetaChain API expects
+  const { identityToken } = useIdentityToken();
 
   // SDK hooks
   const { isLoading, sendMessage: sdkSendMessage } = useChat({
     baseUrl: API_BASE_URL,
-    getToken: async () => {
-      const token = await getAccessToken();
-      console.log("[Solace] Auth token:", token ? `${token.substring(0, 30)}...` : "NO TOKEN");
-      return token || null;
-    },
+    getToken: async () => identityToken || null,
     onData: (chunk: string) => {
       setStreamingContent(prev => prev + chunk);
     },
@@ -137,10 +134,7 @@ export function useSolace(): UseSolaceReturn {
 
   const { searchMemories } = useMemory({
     baseUrl: API_BASE_URL,
-    getToken: async () => {
-      const token = await getAccessToken();
-      return token || null;
-    },
+    getToken: async () => identityToken || null,
   });
 
   // Add initial greeting
