@@ -126,7 +126,7 @@ export function useSolace(): UseSolaceReturn {
       const token = await getAccessToken();
       return token || null;
     },
-    onData: (chunk) => {
+    onData: (chunk: string) => {
       setStreamingContent(prev => prev + chunk);
     },
   });
