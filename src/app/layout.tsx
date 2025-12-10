@@ -1,21 +1,21 @@
 import type { Metadata } from "next";
-import { Source_Serif_4, Merriweather, JetBrains_Mono } from "next/font/google";
+import { Inter, Crimson_Pro, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { PrivyAuthProvider } from "@/components/providers/privy-provider";
 import "./globals.css";
 
-const sourceSerif = Source_Serif_4({
+const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
   display: "swap",
 });
 
-const merriweather = Merriweather({
+const crimsonPro = Crimson_Pro({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["300", "400", "700"],
+  weight: ["300", "400", "500", "600"],
   display: "swap",
 });
 
@@ -25,9 +25,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vault - The Only AI That Can't Betray You",
-  description: "An encrypted AI journal that remembers everything and tells no one. Your thoughts, truly private.",
-  keywords: ["journal", "AI", "encrypted", "private", "memory", "diary"],
+  title: "Solace - Your Gentle Mind Companion",
+  description: "A safe space to explore your feelings with an AI companion that listens, understands, and helps you grow.",
+  keywords: ["mental health", "mood tracking", "therapy", "AI companion", "wellness", "mindfulness"],
 };
 
 export default function RootLayout({
@@ -38,24 +38,24 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${sourceSerif.variable} ${merriweather.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${inter.variable} ${crimsonPro.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <PrivyAuthProvider>
           <ThemeProvider
             attribute="class"
-            defaultTheme="dark"
-            forcedTheme="dark"
+            defaultTheme="light"
+            forcedTheme="light"
             enableSystem={false}
             disableTransitionOnChange
           >
             {children}
             <Toaster
-              theme="dark"
+              theme="light"
               toastOptions={{
                 style: {
-                  background: "hsl(160 35% 8%)",
-                  border: "1px solid hsl(160 20% 18%)",
-                  color: "hsl(30 10% 96%)",
+                  background: "white",
+                  border: "1px solid hsl(30 15% 90%)",
+                  color: "hsl(240 10% 25%)",
                 },
               }}
             />

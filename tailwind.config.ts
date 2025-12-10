@@ -10,7 +10,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Vault color palette - Deep forest green with gold accents
+        // Solace color palette - Calm, warm, therapeutic
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
@@ -44,33 +44,43 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        // Custom Vault colors
-        vault: {
-          green: {
+        // Custom Solace colors
+        solace: {
+          lavender: {
+            50: "#f5f3ff",
+            100: "#ede9fe",
+            200: "#ddd6fe",
+            300: "#c4b5fd",
+            400: "#a78bfa",
+            500: "#8b5cf6",
+            600: "#7c3aed",
+            DEFAULT: "#8B7EC8",
+          },
+          sage: {
             50: "#f0fdf4",
             100: "#dcfce7",
             200: "#bbf7d0",
             300: "#86efac",
             400: "#4ade80",
-            500: "#22c55e",
-            600: "#16a34a",
-            700: "#15803d",
-            800: "#166534",
-            900: "#14532d",
-            950: "#052e16",
-            deep: "#064E3B",
-            darker: "#0D2818",
+            DEFAULT: "#9CB4A0",
           },
-          gold: {
-            DEFAULT: "#D4AF37",
-            light: "#E5C158",
-            dark: "#B8942E",
+          cream: {
+            DEFAULT: "#FBF9F7",
+            warm: "#F5F0EB",
           },
-          steel: {
-            DEFAULT: "#71717A",
-            light: "#A1A1AA",
-            dark: "#52525B",
+          coral: {
+            DEFAULT: "#F5D5D0",
+            soft: "#FAE8E5",
           },
+        },
+        // Mood colors
+        mood: {
+          joy: "hsl(var(--mood-joy))",
+          calm: "hsl(var(--mood-calm))",
+          sad: "hsl(var(--mood-sad))",
+          anxious: "hsl(var(--mood-anxious))",
+          angry: "hsl(var(--mood-angry))",
+          neutral: "hsl(var(--mood-neutral))",
         },
       },
       fontFamily: {
@@ -84,42 +94,33 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
-        "vault-door-open": {
-          "0%": { transform: "rotateY(0deg)" },
-          "100%": { transform: "rotateY(-120deg)" },
-        },
-        "vault-dial-spin": {
-          "0%": { transform: "rotate(0deg)" },
-          "25%": { transform: "rotate(720deg)" },
-          "50%": { transform: "rotate(360deg)" },
-          "75%": { transform: "rotate(900deg)" },
-          "100%": { transform: "rotate(540deg)" },
+        "fade-in": {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
         "fade-in-up": {
           "0%": { opacity: "0", transform: "translateY(20px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
-        "gold-shimmer": {
-          "0%": { backgroundPosition: "-200% 0" },
-          "100%": { backgroundPosition: "200% 0" },
-        },
-        "seal-stamp": {
-          "0%": { transform: "scale(1.5) rotate(-20deg)", opacity: "0" },
-          "50%": { transform: "scale(1.1) rotate(5deg)", opacity: "0.8" },
-          "100%": { transform: "scale(1) rotate(0deg)", opacity: "1" },
-        },
         "breathing": {
-          "0%, 100%": { transform: "scale(1)", opacity: "0.5" },
-          "50%": { transform: "scale(1.05)", opacity: "0.8" },
+          "0%, 100%": { transform: "scale(1)", opacity: "0.7" },
+          "50%": { transform: "scale(1.02)", opacity: "1" },
+        },
+        "gentle-pulse": {
+          "0%, 100%": { opacity: "0.6" },
+          "50%": { opacity: "1" },
+        },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
         },
       },
       animation: {
-        "vault-door-open": "vault-door-open 1.5s ease-in-out forwards",
-        "vault-dial-spin": "vault-dial-spin 2s ease-in-out forwards",
+        "fade-in": "fade-in 0.5s ease-out forwards",
         "fade-in-up": "fade-in-up 0.6s ease-out forwards",
-        "gold-shimmer": "gold-shimmer 3s linear infinite",
-        "seal-stamp": "seal-stamp 0.4s ease-out forwards",
-        "breathing": "breathing 3s ease-in-out infinite",
+        "breathing": "breathing 4s ease-in-out infinite",
+        "gentle-pulse": "gentle-pulse 3s ease-in-out infinite",
+        "float": "float 6s ease-in-out infinite",
       },
     },
   },

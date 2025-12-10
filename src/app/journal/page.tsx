@@ -4,32 +4,47 @@ import { usePrivy } from "@/components/providers/privy-provider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { LogOut, Shield, Lock, Menu, X } from "lucide-react";
+import { LogOut, Sparkles, Menu, X, Send, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { LockIndicator } from "@/components/vault/lock-indicator";
-import { ChatWindow } from "@/components/journal/chat-window";
-import { Sidebar } from "@/components/journal/sidebar";
-import { useVault } from "@/features/journal/use-vault";
+import { Textarea } from "@/components/ui/textarea";
+import { useSolace, MoodType } from "@/features/journal/use-solace";
 import { cn } from "@/lib/utils";
+
+const moodColors: Record<MoodType, string> = {
+  joy: "bg-mood-joy",
+  calm: "bg-mood-calm",
+  sad: "bg-mood-sad",
+  anxious: "bg-mood-anxious",
+  angry: "bg-mood-angry",
+  neutral: "bg-mood-neutral",
+};
+
+const moodLabels: Record<MoodType, string> = {
+  joy: "Joyful",
+  calm: "Calm",
+  sad: "Sad",
+  anxious: "Anxious",
+  angry: "Frustrated",
+  neutral: "Neutral",
+};
 
 export default function JournalPage() {
   const { authenticated, ready, logout, user } = usePrivy();
   const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
 
   const {
     messages,
     isLoading,
-    hasEncryptionKey,
     sendMessage,
-    clearMessages,
-    generateEncryptionKey,
     entries,
-    patterns,
-    analyzePatterns,
-  } = useVault();
+    moodStats,
+    insights,
+    currentStreak,
+    totalCheckIns,
+  } = useSolace();
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -38,17 +53,18 @@ export default function JournalPage() {
     }
   }, [ready, authenticated, router]);
 
-  // Generate encryption key on mount if not present
-  useEffect(() => {
-    if (ready && authenticated && !hasEncryptionKey) {
-      generateEncryptionKey();
-    }
-  }, [ready, authenticated, hasEncryptionKey, generateEncryptionKey]);
+  const handleSend = async () => {
+    if (!inputValue.trim() || isLoading) return;
+    const message = inputValue;
+    setInputValue("");
+    await sendMessage(message);
+  };
 
-  const handleAnalyzePatterns = async () => {
-    setIsAnalyzing(true);
-    await analyzePatterns();
-    setIsAnalyzing(false);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
   };
 
   if (!ready) {
@@ -59,8 +75,10 @@ export default function JournalPage() {
           animate={{ opacity: 1 }}
           className="flex flex-col items-center gap-4"
         >
-          <div className="h-10 w-10 rounded-full border-2 border-vault-gold/40 border-t-vault-gold animate-spin" />
-          <p className="text-muted-foreground font-light">Loading vault...</p>
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-solace-lavender-400 to-solace-lavender-600 flex items-center justify-center animate-breathing">
+            <Sparkles className="w-6 h-6 text-white" />
+          </div>
+          <p className="text-muted-foreground font-light">Loading...</p>
         </motion.div>
       </div>
     );
@@ -76,94 +94,216 @@ export default function JournalPage() {
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 md:hidden"
+        className="fixed top-4 right-4 z-50 md:hidden"
         onClick={() => setSidebarOpen(!sidebarOpen)}
       >
-        {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        {sidebarOpen ? <X className="w-5 h-5" /> : <BarChart3 className="w-5 h-5" />}
       </Button>
-
-      {/* Sidebar */}
-      <div
-        className={cn(
-          "fixed md:relative inset-y-0 left-0 z-40 transition-transform duration-300",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
-          "md:block"
-        )}
-      >
-        <Sidebar
-          entries={entries}
-          patterns={patterns}
-          onAnalyzePatterns={handleAnalyzePatterns}
-          isAnalyzing={isAnalyzing}
-        />
-      </div>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-card/30">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-vault-gold flex items-center justify-center">
-                <Shield className="w-4 h-4 text-vault-green-darker" />
-              </div>
-              <span className="font-display text-xl tracking-tight hidden sm:inline">
-                Vault
-              </span>
-            </Link>
-            <LockIndicator encrypted={hasEncryptionKey} />
-          </div>
+        <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-background">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-solace-lavender-400 to-solace-lavender-600 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-display text-xl">Solace</span>
+          </Link>
 
           <div className="flex items-center gap-4">
-            {user?.email?.address && (
-              <span className="text-sm text-muted-foreground hidden sm:inline">
-                {user.email.address}
-              </span>
-            )}
-            <Button variant="ghost" size="sm" onClick={logout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Sign Out</span>
+            <span className="text-sm text-muted-foreground hidden sm:inline">
+              {user?.email?.address || "Guest"}
+            </span>
+            <Button variant="ghost" size="sm" onClick={logout} className="rounded-full">
+              <LogOut className="w-4 h-4" />
             </Button>
           </div>
         </header>
 
-        {/* Encryption gate */}
-        {!hasEncryptionKey ? (
-          <div className="flex-1 flex items-center justify-center p-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center max-w-md"
-            >
-              <div className="w-20 h-20 rounded-full bg-vault-gold/10 flex items-center justify-center mx-auto mb-6">
-                <Lock className="w-10 h-10 text-vault-gold" />
-              </div>
-              <h2 className="font-display text-2xl mb-3">
-                Generating Your Encryption Key
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                Your wallet is being set up to encrypt all your journal entries.
-                This key is unique to you and never leaves your device.
-              </p>
-              <Button onClick={generateEncryptionKey}>
-                Generate Encryption Key
-              </Button>
-            </motion.div>
+        {/* Chat area */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-2xl mx-auto space-y-6">
+            {messages.map((message) => (
+              <motion.div
+                key={message.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={cn(
+                  "flex gap-4",
+                  message.role === "user" && "justify-end"
+                )}
+              >
+                {message.role === "assistant" && (
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-solace-lavender-400 to-solace-lavender-600 flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
+                )}
+                <div
+                  className={cn(
+                    "px-5 py-4 max-w-md",
+                    message.role === "user"
+                      ? "chat-bubble-user"
+                      : "chat-bubble-assistant"
+                  )}
+                >
+                  <p className="leading-relaxed">{message.content}</p>
+                  {message.detectedMood && message.detectedMood !== "neutral" && (
+                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/20">
+                      <div className={cn("w-2 h-2 rounded-full", moodColors[message.detectedMood])} />
+                      <span className="text-xs opacity-80">
+                        Feeling {moodLabels[message.detectedMood].toLowerCase()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+
+            {isLoading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex gap-4"
+              >
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-solace-lavender-400 to-solace-lavender-600 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div className="chat-bubble-assistant px-5 py-4">
+                  <div className="flex gap-1">
+                    <div className="typing-dot" />
+                    <div className="typing-dot" />
+                    <div className="typing-dot" />
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </div>
-        ) : (
-          <ChatWindow
-            messages={messages}
-            onSend={sendMessage}
-            onClear={clearMessages}
-            isLoading={isLoading}
-          />
-        )}
+        </div>
+
+        {/* Input area */}
+        <div className="border-t border-border bg-background p-4">
+          <div className="max-w-2xl mx-auto">
+            <div className="flex gap-3 items-end">
+              <Textarea
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Share what's on your mind..."
+                className="min-h-[56px] max-h-[200px] resize-none rounded-2xl border-border focus:border-primary"
+                rows={1}
+              />
+              <Button
+                onClick={handleSend}
+                disabled={!inputValue.trim() || isLoading}
+                size="icon"
+                className="rounded-full h-14 w-14 flex-shrink-0"
+              >
+                <Send className="w-5 h-5" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground text-center mt-3">
+              Your conversations are private and help track your emotional patterns
+            </p>
+          </div>
+        </div>
       </div>
+
+      {/* Sidebar - Insights */}
+      <aside
+        className={cn(
+          "fixed md:relative inset-y-0 right-0 z-40 w-80 bg-background border-l border-border transition-transform duration-300 overflow-y-auto",
+          sidebarOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"
+        )}
+      >
+        <div className="p-6 space-y-6">
+          {/* Streak */}
+          <div className="card-soft p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-muted-foreground">Check-in streak</span>
+              <span className="text-2xl font-display">{currentStreak}</span>
+            </div>
+            <div className="flex gap-1">
+              {[...Array(7)].map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "h-2 flex-1 rounded-full",
+                    i < currentStreak ? "bg-primary" : "bg-muted"
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Mood Distribution */}
+          <div>
+            <h3 className="font-display text-lg mb-3">This week's moods</h3>
+            <div className="space-y-3">
+              {moodStats.slice(0, 4).map((stat) => (
+                <div key={stat.mood} className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{moodLabels[stat.mood]}</span>
+                    <span>{stat.percentage}%</span>
+                  </div>
+                  <div className="mood-bar">
+                    <div
+                      className={cn("mood-bar-fill", moodColors[stat.mood])}
+                      style={{ width: `${stat.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Insights */}
+          <div>
+            <h3 className="font-display text-lg mb-3">Insights</h3>
+            <div className="space-y-3">
+              {insights.map((insight) => (
+                <div key={insight.id} className="insight-card">
+                  <div className="flex items-start gap-3">
+                    {insight.mood && (
+                      <div className={cn("w-3 h-3 rounded-full mt-1", moodColors[insight.mood])} />
+                    )}
+                    <div>
+                      <h4 className="text-sm font-medium mb-1">{insight.title}</h4>
+                      <p className="text-xs text-muted-foreground">{insight.description}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent entries */}
+          <div>
+            <h3 className="font-display text-lg mb-3">Recent check-ins</h3>
+            <div className="space-y-2">
+              {entries.slice(0, 5).map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                >
+                  <div className={cn("w-3 h-3 rounded-full", moodColors[entry.mood])} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm truncate">{entry.note}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {entry.date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </aside>
 
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          className="fixed inset-0 bg-black/20 z-30 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}

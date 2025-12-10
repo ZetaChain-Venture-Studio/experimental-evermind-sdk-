@@ -3,49 +3,52 @@
 @tailwind utilities;
 
 /* ================================================
-   VAULT Design System - Encrypted AI Journal
-   Protective, solid, trustworthy, luxurious
+   SOLACE Design System - Your Gentle Mind Companion
+   Calm, nurturing, trustworthy, peaceful
    ================================================ */
 
 :root {
-  --radius: 0.75rem;
+  --radius: 1rem;
 
-  /* Deep forest green palette */
-  --background: 160 27% 4%;
-  --foreground: 30 10% 96%;
+  /* Warm, calming palette */
+  --background: 30 25% 98%;
+  --foreground: 240 10% 25%;
 
-  --card: 160 35% 8%;
-  --card-foreground: 30 10% 96%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 25%;
 
-  --popover: 160 35% 6%;
-  --popover-foreground: 30 10% 96%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 25%;
 
-  /* Gold accent - trustworthy, luxurious */
-  --primary: 43 74% 52%;
-  --primary-foreground: 160 27% 4%;
+  /* Soft lavender - calming, therapeutic */
+  --primary: 252 47% 63%;
+  --primary-foreground: 0 0% 100%;
 
-  --secondary: 160 25% 12%;
-  --secondary-foreground: 30 10% 90%;
+  /* Warm sage - growth, nature */
+  --secondary: 150 20% 70%;
+  --secondary-foreground: 240 10% 25%;
 
-  --muted: 160 20% 15%;
-  --muted-foreground: 30 5% 55%;
+  --muted: 30 15% 93%;
+  --muted-foreground: 240 5% 50%;
 
-  --accent: 43 74% 52%;
-  --accent-foreground: 160 27% 4%;
+  /* Soft coral - warmth, emotion */
+  --accent: 15 70% 85%;
+  --accent-foreground: 240 10% 25%;
 
-  --destructive: 0 62% 50%;
-  --destructive-foreground: 30 10% 96%;
+  --destructive: 0 60% 60%;
+  --destructive-foreground: 0 0% 100%;
 
-  --border: 160 20% 18%;
-  --input: 160 20% 18%;
-  --ring: 43 74% 52%;
+  --border: 30 15% 90%;
+  --input: 30 15% 90%;
+  --ring: 252 47% 63%;
 
-  /* Vault specific colors */
-  --vault-gold: 43 74% 52%;
-  --vault-green-deep: 160 27% 4%;
-  --vault-green-darker: 160 35% 3%;
-  --vault-steel: 0 0% 40%;
-  --vault-steel-dark: 0 0% 30%;
+  /* Mood colors */
+  --mood-joy: 45 90% 65%;
+  --mood-calm: 200 60% 70%;
+  --mood-sad: 220 40% 60%;
+  --mood-anxious: 30 70% 65%;
+  --mood-angry: 0 60% 60%;
+  --mood-neutral: 240 5% 65%;
 }
 
 /* Base styles */
@@ -62,176 +65,129 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar - steel gray with gold accent */
+/* Soft, minimal scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(160 20% 10%);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(160 15% 25%);
-  border-radius: 4px;
+  background: hsl(var(--border));
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(43 74% 52% / 0.5);
+  background: hsl(var(--muted-foreground) / 0.3);
 }
 
-/* Typography - Serif for trustworthiness */
+/* Typography */
 .font-display {
   font-family: var(--font-display), Georgia, serif;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .text-display-xl {
-  font-size: clamp(2.5rem, 5vw, 4rem);
-  line-height: 1.1;
-  font-weight: 400;
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  line-height: 1.15;
+  font-weight: 300;
 }
 
 .text-display-lg {
-  font-size: clamp(2rem, 4vw, 3rem);
-  line-height: 1.15;
-  font-weight: 400;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  line-height: 1.2;
+  font-weight: 300;
 }
 
 .text-display-md {
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  line-height: 1.2;
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  line-height: 1.3;
   font-weight: 400;
 }
 
-/* Gold shimmer effect */
-.gold-shimmer {
-  background: linear-gradient(
-    90deg,
-    #D4AF37 0%,
-    #E5C158 25%,
-    #D4AF37 50%,
-    #E5C158 75%,
-    #D4AF37 100%
-  );
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: gold-shimmer 3s linear infinite;
-}
-
-@keyframes gold-shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-
-/* Vault door styles */
-.vault-door {
-  perspective: 1000px;
-  transform-style: preserve-3d;
-}
-
-.vault-door-panel {
-  transform-origin: left center;
-  backface-visibility: hidden;
-}
-
-.vault-door-open {
-  animation: vault-door-open 1.5s ease-in-out forwards;
-}
-
-@keyframes vault-door-open {
-  0% { transform: rotateY(0deg); }
-  100% { transform: rotateY(-120deg); }
-}
-
-/* Vault dial */
-.vault-dial {
-  transition: transform 0.3s ease-out;
-}
-
-.vault-dial-spinning {
-  animation: vault-dial-spin 2s ease-in-out;
-}
-
-@keyframes vault-dial-spin {
-  0% { transform: rotate(0deg); }
-  25% { transform: rotate(720deg); }
-  50% { transform: rotate(360deg); }
-  75% { transform: rotate(900deg); }
-  100% { transform: rotate(540deg); }
-}
-
-/* Paper texture for journal entries */
-.paper-texture {
-  background-image:
-    linear-gradient(90deg, transparent 79px, hsl(43 74% 52% / 0.03) 79px, hsl(43 74% 52% / 0.03) 81px, transparent 81px),
-    linear-gradient(hsl(43 74% 52% / 0.02) 1px, transparent 1px);
-  background-size: 100% 28px;
-}
-
-/* Wax seal stamp animation */
-.seal-stamp {
-  animation: seal-stamp 0.4s ease-out forwards;
-}
-
-@keyframes seal-stamp {
-  0% { transform: scale(1.5) rotate(-20deg); opacity: 0; }
-  50% { transform: scale(1.1) rotate(5deg); opacity: 0.8; }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
-}
-
-/* Leather texture card */
-.leather-card {
+/* Gentle gradient backgrounds */
+.gradient-calm {
   background: linear-gradient(
     135deg,
-    hsl(160 35% 10%) 0%,
-    hsl(160 30% 8%) 50%,
-    hsl(160 35% 10%) 100%
+    hsl(252 47% 95%) 0%,
+    hsl(200 40% 95%) 50%,
+    hsl(150 30% 95%) 100%
   );
-  box-shadow:
-    inset 0 1px 0 hsl(160 30% 15%),
-    inset 0 -1px 0 hsl(160 40% 5%),
-    0 4px 16px hsl(0 0% 0% / 0.3);
 }
 
-/* Metal/steel effect */
-.brushed-metal {
+.gradient-warm {
   background: linear-gradient(
-    145deg,
-    hsl(0 0% 35%) 0%,
-    hsl(0 0% 45%) 50%,
-    hsl(0 0% 35%) 100%
+    135deg,
+    hsl(30 40% 97%) 0%,
+    hsl(15 50% 96%) 100%
   );
 }
 
-/* Gold foil accent border */
-.gold-border {
-  border: 1px solid transparent;
-  background:
-    linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
-    linear-gradient(135deg, #D4AF37, #E5C158, #D4AF37) border-box;
+/* Soft card styles */
+.card-soft {
+  background: hsl(var(--card));
+  border-radius: var(--radius);
+  box-shadow:
+    0 1px 3px hsl(240 10% 50% / 0.04),
+    0 4px 12px hsl(240 10% 50% / 0.04);
+  border: 1px solid hsl(var(--border));
 }
 
-/* Lock indicator pulse */
-.lock-pulse {
-  animation: lock-pulse 2s ease-in-out infinite;
+.card-soft:hover {
+  box-shadow:
+    0 2px 6px hsl(240 10% 50% / 0.06),
+    0 8px 24px hsl(240 10% 50% / 0.06);
 }
 
-@keyframes lock-pulse {
-  0%, 100% { opacity: 0.7; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
+/* Mood indicator dots */
+.mood-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
 }
 
-/* Fade in up animation */
-.fade-in-up {
-  animation: fade-in-up 0.6s ease-out forwards;
+.mood-dot:hover {
+  transform: scale(1.2);
 }
 
-@keyframes fade-in-up {
-  0% { opacity: 0; transform: translateY(20px); }
+.mood-joy { background-color: hsl(var(--mood-joy)); }
+.mood-calm { background-color: hsl(var(--mood-calm)); }
+.mood-sad { background-color: hsl(var(--mood-sad)); }
+.mood-anxious { background-color: hsl(var(--mood-anxious)); }
+.mood-angry { background-color: hsl(var(--mood-angry)); }
+.mood-neutral { background-color: hsl(var(--mood-neutral)); }
+
+/* Breathing animation for calm effect */
+.breathing {
+  animation: breathing 4s ease-in-out infinite;
+}
+
+@keyframes breathing {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.02); opacity: 1; }
+}
+
+/* Gentle pulse for notifications */
+.gentle-pulse {
+  animation: gentle-pulse 3s ease-in-out infinite;
+}
+
+@keyframes gentle-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Fade in animation */
+.fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; transform: translateY(8px); }
   100% { opacity: 1; transform: translateY(0); }
 }
 
@@ -248,19 +204,19 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
-  background: linear-gradient(135deg, #D4AF37 0%, #B8942E 100%);
-  color: hsl(160 27% 4%);
+  padding: 0.875rem 1.75rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
   font-weight: 500;
-  letter-spacing: 0.025em;
-  border-radius: 0.5rem;
+  letter-spacing: 0.01em;
+  border-radius: 9999px;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px hsl(43 74% 30% / 0.3);
+  box-shadow: 0 2px 8px hsl(var(--primary) / 0.25);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #E5C158 0%, #D4AF37 100%);
-  box-shadow: 0 6px 20px hsl(43 74% 30% / 0.4);
+  background: hsl(252 47% 58%);
+  box-shadow: 0 4px 16px hsl(var(--primary) / 0.3);
   transform: translateY(-1px);
 }
 
@@ -269,29 +225,82 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
+  padding: 0.875rem 1.75rem;
   background: transparent;
   color: hsl(var(--foreground));
   font-weight: 400;
-  letter-spacing: 0.025em;
+  letter-spacing: 0.01em;
   border: 1px solid hsl(var(--border));
-  border-radius: 0.5rem;
+  border-radius: 9999px;
   transition: all 0.3s ease;
 }
 
 .btn-secondary:hover {
   background: hsl(var(--muted));
-  border-color: hsl(43 74% 52% / 0.3);
+  border-color: hsl(var(--muted-foreground) / 0.2);
+}
+
+/* Mood chart bar */
+.mood-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: hsl(var(--border));
+  overflow: hidden;
+}
+
+.mood-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* Insight card */
+.insight-card {
+  padding: 1.25rem;
+  background: linear-gradient(135deg, hsl(252 47% 97%) 0%, hsl(200 40% 97%) 100%);
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--primary) / 0.1);
 }
 
 /* Focus states */
 *:focus-visible {
-  outline: 2px solid hsl(43 74% 52%);
+  outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
 }
 
 /* Selection color */
 ::selection {
-  background: hsl(43 74% 52% / 0.3);
+  background: hsl(var(--primary) / 0.2);
   color: hsl(var(--foreground));
+}
+
+/* Chat bubble styles */
+.chat-bubble-user {
+  background: hsl(var(--primary));
+  color: white;
+  border-radius: 1.25rem 1.25rem 0.25rem 1.25rem;
+}
+
+.chat-bubble-assistant {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  border-radius: 1.25rem 1.25rem 1.25rem 0.25rem;
+}
+
+/* Typing indicator */
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  background: hsl(var(--muted-foreground));
+  border-radius: 50%;
+  animation: typing-bounce 1.4s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(1) { animation-delay: 0s; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
 }
