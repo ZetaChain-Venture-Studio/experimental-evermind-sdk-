@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useMemo, useEffect } from "react";
-import { useChat, useMemory, useEncryption } from "@reverbia/sdk";
+import { useChat, useMemory, useEncryption } from "@reverbia/sdk/react";
 
 const VAULT_COMPANION_PROMPT = `You are a thoughtful AI journal companion inside a private, encrypted vault.
 Your role is to help the user process their thoughts and emotions.
