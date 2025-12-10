@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { useChat, useMemory, useEncryption } from "@reverbia/sdk/react";
+import { postApiV1ChatCompletions } from "@reverbia/sdk";
 import { usePrivy } from "@privy-io/react-auth";
+
+const API_BASE_URL = "https://api.reverbia.ai";
 
 export type MoodType = "joy" | "calm" | "sad" | "anxious" | "angry" | "neutral";
 
@@ -94,51 +96,11 @@ function detectMood(text: string): MoodType {
 
 export function useSolace(): UseSolaceReturn {
   const [messages, setMessages] = useState<SolaceMessage[]>([]);
-  const [streamingContent, setStreamingContent] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [storedMemories, setStoredMemories] = useState<Array<{ value: string; createdAt?: number }>>([]);
   const messageIdRef = useRef(0);
 
   const { getAccessToken } = usePrivy();
-
-  // SDK hooks with proper configuration
-  const {
-    isLoading,
-    sendMessage: sdkSendMessage,
-    stop,
-  } = useChat({
-    baseUrl: "https://api.reverbia.ai",
-    getToken: async () => {
-      const token = await getAccessToken();
-      return token || "";
-    },
-  });
-
-  const {
-    extractMemoriesFromMessage,
-    searchMemories,
-  } = useMemory({
-    completionsModel: "gpt-4o",
-    embeddingModel: "text-embedding-3-small",
-    generateEmbeddings: true,
-    baseUrl: "https://api.reverbia.ai",
-    getToken: async () => {
-      const token = await getAccessToken();
-      return token || "";
-    },
-  });
-
-  const {
-    hasEncryptionKey,
-    generateEncryptionKey: sdkGenerateKey,
-  } = useEncryption();
-
-  const generateEncryptionKey = useCallback(async () => {
-    try {
-      await sdkGenerateKey();
-    } catch (error) {
-      console.error("Failed to generate encryption key:", error);
-    }
-  }, [sdkGenerateKey]);
 
   // Add initial greeting
   useEffect(() => {
@@ -165,6 +127,7 @@ export function useSolace(): UseSolaceReturn {
       detectedMood,
     };
     setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
 
     // Prepare messages for API
     const chatHistory = messages.map(m => ({
@@ -172,77 +135,67 @@ export function useSolace(): UseSolaceReturn {
       content: m.content,
     }));
 
-    // Add system prompt
+    // Add system prompt and current message
     const apiMessages = [
       { role: "system" as const, content: SOLACE_SYSTEM_PROMPT },
       ...chatHistory,
       { role: "user" as const, content },
     ];
 
-    // Create placeholder for assistant response
-    const assistantMessageId = `msg-${++messageIdRef.current}`;
-    setStreamingContent("");
-
     try {
-      await sdkSendMessage(
-        {
+      // Get auth token
+      const token = await getAccessToken();
+
+      // Call the SDK
+      const result = await postApiV1ChatCompletions({
+        baseUrl: API_BASE_URL,
+        body: {
           messages: apiMessages,
           model: "gpt-4o",
+          stream: false,
         },
-        {
-          onData: (chunk: string) => {
-            setStreamingContent(prev => prev + chunk);
-          },
-          onFinish: (response: { choices: Array<{ message: { content: string } }> }) => {
-            const finalContent = response.choices?.[0]?.message?.content || streamingContent;
-            const assistantMessage: SolaceMessage = {
-              id: assistantMessageId,
-              role: "assistant",
-              content: finalContent,
-              timestamp: Date.now(),
-            };
-            setMessages(prev => [...prev, assistantMessage]);
-            setStreamingContent("");
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+      });
 
-            // Extract memories in background
-            if (detectedMood !== "neutral") {
-              extractMemoriesFromMessage({
-                messages: [
-                  { role: "user", content },
-                  { role: "assistant", content: finalContent },
-                ],
-                model: "gpt-4o",
-              }).then((memories) => {
-                if (memories && memories.length > 0) {
-                  setStoredMemories(prev => [...prev, ...memories.map((m: { value: string }) => ({
-                    value: m.value,
-                    createdAt: Date.now(),
-                  }))]);
-                }
-              }).catch(console.error);
-            }
-          },
-          onError: (error: Error) => {
-            console.error("Chat error:", error);
-            const errorMessage: SolaceMessage = {
-              id: assistantMessageId,
-              role: "assistant",
-              content: "I'm having trouble connecting right now. Please try again in a moment.",
-              timestamp: Date.now(),
-            };
-            setMessages(prev => [...prev, errorMessage]);
-            setStreamingContent("");
-          },
-        }
-      );
+      if (result.error) {
+        throw new Error(result.error.error || "Failed to get response");
+      }
+
+      const responseContent = result.data?.choices?.[0]?.message?.content || "I'm having trouble responding right now.";
+
+      const assistantMessage: SolaceMessage = {
+        id: `msg-${++messageIdRef.current}`,
+        role: "assistant",
+        content: responseContent,
+        timestamp: Date.now(),
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+
+      // Store memory locally for mood tracking
+      if (detectedMood !== "neutral") {
+        setStoredMemories(prev => [...prev, {
+          value: content,
+          createdAt: Date.now(),
+        }]);
+      }
     } catch (error) {
-      console.error("Send message error:", error);
+      console.error("Chat error:", error);
+      const errorMessage: SolaceMessage = {
+        id: `msg-${++messageIdRef.current}`,
+        role: "assistant",
+        content: "I'm having trouble connecting right now. Please try again in a moment.",
+        timestamp: Date.now(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
     }
-  }, [messages, sdkSendMessage, extractMemoriesFromMessage, streamingContent]);
+  }, [messages, getAccessToken]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
-    setStreamingContent("");
   }, []);
 
   // Build mood entries from stored memories
@@ -343,15 +296,14 @@ export function useSolace(): UseSolaceReturn {
   const currentStreak = entries.length;
   const totalCheckIns = storedMemories.length;
 
+  // Encryption is not supported by this SDK version - placeholder for future
+  const hasEncryptionKey = false;
+  const generateEncryptionKey = useCallback(async () => {
+    console.log("Encryption not available in current SDK version");
+  }, []);
+
   return {
-    messages: streamingContent
-      ? [...messages, {
-          id: "streaming",
-          role: "assistant" as const,
-          content: streamingContent,
-          timestamp: Date.now(),
-        }]
-      : messages,
+    messages,
     isLoading,
     sendMessage,
     clearMessages,
@@ -360,7 +312,7 @@ export function useSolace(): UseSolaceReturn {
     insights,
     currentStreak,
     totalCheckIns,
-    hasEncryptionKey: hasEncryptionKey ?? false,
+    hasEncryptionKey,
     generateEncryptionKey,
   };
 }
