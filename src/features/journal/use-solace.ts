@@ -226,7 +226,7 @@ export function useSolace(): UseSolaceReturn {
       };
       setMessages(prev => [...prev, errorMessage]);
     }
-  }, [messages, sdkSendMessage]);
+  }, [messages, sdkSendMessage, identityToken]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
