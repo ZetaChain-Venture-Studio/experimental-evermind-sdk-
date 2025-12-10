@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { postApiV1ChatCompletions } from "@reverbia/sdk";
+import { useChat, useMemory } from "@reverbia/sdk/react";
 import { usePrivy } from "@privy-io/react-auth";
 
 const API_BASE_URL = "https://api.reverbia.ai";
@@ -94,13 +94,50 @@ function detectMood(text: string): MoodType {
   return "neutral";
 }
 
+// Helper to convert string content to SDK message format
+function toSdkMessage(role: string, content: string) {
+  return {
+    role: role as "user" | "assistant" | "system",
+    content: [{ type: "text", text: content }],
+  };
+}
+
+// Helper to extract text content from SDK message response
+function extractTextContent(content: Array<{ type?: string; text?: string }> | undefined): string {
+  if (!content || content.length === 0) return "";
+  return content
+    .filter(part => part.type === "text" && part.text)
+    .map(part => part.text)
+    .join("");
+}
+
 export function useSolace(): UseSolaceReturn {
   const [messages, setMessages] = useState<SolaceMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [storedMemories, setStoredMemories] = useState<Array<{ value: string; createdAt?: number }>>([]);
   const messageIdRef = useRef(0);
+  const [streamingContent, setStreamingContent] = useState("");
 
   const { getAccessToken } = usePrivy();
+
+  // SDK hooks
+  const { isLoading, sendMessage: sdkSendMessage } = useChat({
+    baseUrl: API_BASE_URL,
+    getToken: async () => {
+      const token = await getAccessToken();
+      return token || null;
+    },
+    onData: (chunk) => {
+      setStreamingContent(prev => prev + chunk);
+    },
+  });
+
+  const { searchMemories } = useMemory({
+    baseUrl: API_BASE_URL,
+    getToken: async () => {
+      const token = await getAccessToken();
+      return token || null;
+    },
+  });
 
   // Add initial greeting
   useEffect(() => {
@@ -127,43 +164,31 @@ export function useSolace(): UseSolaceReturn {
       detectedMood,
     };
     setMessages(prev => [...prev, userMessage]);
-    setIsLoading(true);
+    setStreamingContent("");
 
-    // Prepare messages for API
-    const chatHistory = messages.map(m => ({
-      role: m.role as "user" | "assistant" | "system",
-      content: m.content,
-    }));
+    // Prepare messages for SDK in the correct format
+    const chatHistory = messages.map(m => toSdkMessage(m.role, m.content));
 
     // Add system prompt and current message
     const apiMessages = [
-      { role: "system" as const, content: SOLACE_SYSTEM_PROMPT },
+      toSdkMessage("system", SOLACE_SYSTEM_PROMPT),
       ...chatHistory,
-      { role: "user" as const, content },
+      toSdkMessage("user", content),
     ];
 
     try {
-      // Get auth token
-      const token = await getAccessToken();
-
-      // Call the SDK
-      const result = await postApiV1ChatCompletions({
-        baseUrl: API_BASE_URL,
-        body: {
-          messages: apiMessages,
-          model: "gpt-4o",
-          stream: false,
-        },
-        headers: {
-          Authorization: token ? `Bearer ${token}` : undefined,
-        },
+      const result = await sdkSendMessage({
+        messages: apiMessages,
+        model: "gpt-4o",
       });
 
       if (result.error) {
-        throw new Error(result.error.error || "Failed to get response");
+        throw new Error(result.error);
       }
 
-      const responseContent = result.data?.choices?.[0]?.message?.content || "I'm having trouble responding right now.";
+      // Extract text from the response
+      const responseContent = extractTextContent(result.data?.choices?.[0]?.message?.content)
+        || "I'm having trouble responding right now.";
 
       const assistantMessage: SolaceMessage = {
         id: `msg-${++messageIdRef.current}`,
@@ -189,10 +214,8 @@ export function useSolace(): UseSolaceReturn {
         timestamp: Date.now(),
       };
       setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
     }
-  }, [messages, getAccessToken]);
+  }, [messages, sdkSendMessage]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
@@ -296,10 +319,10 @@ export function useSolace(): UseSolaceReturn {
   const currentStreak = entries.length;
   const totalCheckIns = storedMemories.length;
 
-  // Encryption is not supported by this SDK version - placeholder for future
+  // Encryption placeholder
   const hasEncryptionKey = false;
   const generateEncryptionKey = useCallback(async () => {
-    console.log("Encryption not available in current SDK version");
+    console.log("Encryption setup pending");
   }, []);
 
   return {
