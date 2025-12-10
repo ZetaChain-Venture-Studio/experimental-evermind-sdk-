@@ -151,6 +151,19 @@ export function useSolace(): UseSolaceReturn {
   }, []);
 
   const sendMessage = useCallback(async (content: string) => {
+    // Check if we have an identity token
+    if (!identityToken) {
+      console.error("[Solace] No identity token - user may not be fully authenticated");
+      const errorMessage: SolaceMessage = {
+        id: `msg-${++messageIdRef.current}`,
+        role: "assistant",
+        content: "Please wait a moment while we connect... If this persists, try logging out and back in.",
+        timestamp: Date.now(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      return;
+    }
+
     const detectedMood = detectMood(content);
 
     // Add user message
