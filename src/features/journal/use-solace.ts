@@ -124,10 +124,14 @@ export function useSolace(): UseSolaceReturn {
     baseUrl: API_BASE_URL,
     getToken: async () => {
       const token = await getAccessToken();
+      console.log("[Solace] Auth token:", token ? `${token.substring(0, 30)}...` : "NO TOKEN");
       return token || null;
     },
     onData: (chunk: string) => {
       setStreamingContent(prev => prev + chunk);
+    },
+    onError: (error: Error) => {
+      console.error("[Solace] Chat error:", error.message);
     },
   });
 
