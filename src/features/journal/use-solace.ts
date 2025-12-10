@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useChat, useMemory } from "@reverbia/sdk/react";
 import { usePrivy } from "@privy-io/react-auth";
 
-const API_BASE_URL = "https://api.reverbia.ai";
+const API_BASE_URL = "https://ai-portal-dev.zetachain.com";
 
 export type MoodType = "joy" | "calm" | "sad" | "anxious" | "angry" | "neutral";
 
