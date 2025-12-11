@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useChat, useMemory } from "@reverbia/sdk/react";
-import { useIdentityToken } from "@privy-io/react-auth";
+import { usePrivy, useIdentityToken } from "@privy-io/react-auth";
 
 const API_BASE_URL = "https://ai-portal-dev.zetachain.com";
 
@@ -117,13 +117,47 @@ export function useSolace(): UseSolaceReturn {
   const messageIdRef = useRef(0);
   const [streamingContent, setStreamingContent] = useState("");
 
-  // Use identity token (not access token) - this is what the ZetaChain API expects
+  // Get auth state from Privy
+  const { authenticated, ready, getAccessToken, user } = usePrivy();
   const { identityToken } = useIdentityToken();
+
+  // Log auth state for debugging
+  useEffect(() => {
+    console.log("[Solace] Auth state:", {
+      ready,
+      authenticated,
+      hasIdentityToken: !!identityToken,
+      hasUser: !!user,
+      userId: user?.id?.substring(0, 20)
+    });
+  }, [ready, authenticated, identityToken, user]);
+
+  // Token getter that tries identityToken first, then falls back to accessToken
+  const getToken = useCallback(async (): Promise<string | null> => {
+    if (identityToken) {
+      console.log("[Solace] Using identity token");
+      return identityToken;
+    }
+
+    // Fallback to access token
+    try {
+      const accessToken = await getAccessToken();
+      if (accessToken) {
+        console.log("[Solace] Using access token as fallback");
+        return accessToken;
+      }
+    } catch (e) {
+      console.error("[Solace] Failed to get access token:", e);
+    }
+
+    console.log("[Solace] No token available");
+    return null;
+  }, [identityToken, getAccessToken]);
 
   // SDK hooks
   const { isLoading, sendMessage: sdkSendMessage } = useChat({
     baseUrl: API_BASE_URL,
-    getToken: async () => identityToken || null,
+    getToken,
     onData: (chunk: string) => {
       setStreamingContent(prev => prev + chunk);
     },
@@ -134,7 +168,7 @@ export function useSolace(): UseSolaceReturn {
 
   const { searchMemories } = useMemory({
     baseUrl: API_BASE_URL,
-    getToken: async () => identityToken || null,
+    getToken,
   });
 
   // Add initial greeting
@@ -151,9 +185,10 @@ export function useSolace(): UseSolaceReturn {
   }, []);
 
   const sendMessage = useCallback(async (content: string) => {
-    // Check if we have an identity token
-    if (!identityToken) {
-      console.error("[Solace] No identity token - user may not be fully authenticated");
+    // Check if we're authenticated and have a token
+    const token = await getToken();
+    if (!token) {
+      console.error("[Solace] No token available - user may not be fully authenticated");
       const errorMessage: SolaceMessage = {
         id: `msg-${++messageIdRef.current}`,
         role: "assistant",
@@ -226,7 +261,7 @@ export function useSolace(): UseSolaceReturn {
       };
       setMessages(prev => [...prev, errorMessage]);
     }
-  }, [messages, sdkSendMessage, identityToken]);
+  }, [messages, sdkSendMessage, getToken]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
