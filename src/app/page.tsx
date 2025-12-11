@@ -1,11 +1,22 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Heart, DollarSign, Scale, MessageSquare, ArrowRight, Sparkles } from "lucide-react";
+import { Heart, DollarSign, Scale, MessageSquare, ArrowRight, Sparkles, Brain } from "lucide-react";
 import Link from "next/link";
 import { EvermindBadge } from "@/components/evermind-badge";
 
 const projects = [
+  {
+    id: "solace",
+    title: "Solace",
+    subtitle: "Your AI Therapist",
+    description: "A gentle companion for mental wellness. Track your mood, explore your feelings through conversation.",
+    icon: Brain,
+    gradient: "from-purple-500 to-lavender-500",
+    bgGradient: "from-purple-50 to-indigo-50",
+    href: "/projects/solace",
+    tags: ["Therapy", "Mood Tracking", "Wellness"],
+  },
   {
     id: "flirt-ai",
     title: "What Would You Do To Me?",
