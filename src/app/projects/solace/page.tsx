@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Brain,
@@ -21,22 +21,7 @@ import {
 import Link from "next/link";
 import { usePrivy } from "@privy-io/react-auth";
 import { EvermindBadge } from "@/components/evermind-badge";
-
-type MoodType = "joy" | "calm" | "sad" | "anxious" | "angry" | "neutral";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: number;
-  detectedMood?: MoodType;
-}
-
-interface MoodEntry {
-  mood: MoodType;
-  count: number;
-  percentage: number;
-}
+import { useSolace, type MoodType } from "@/features/journal/use-solace";
 
 const moodConfig: Record<MoodType, { icon: typeof Heart; color: string; bgColor: string; label: string }> = {
   joy: { icon: Sun, color: "text-amber-500", bgColor: "bg-amber-100", label: "Joyful" },
@@ -47,128 +32,32 @@ const moodConfig: Record<MoodType, { icon: typeof Heart; color: string; bgColor:
   neutral: { icon: Minus, color: "text-gray-500", bgColor: "bg-gray-100", label: "Neutral" },
 };
 
-const therapistResponses: Record<string, string[]> = {
-  greeting: [
-    "Hello! I'm here to listen. How are you feeling today?",
-    "Welcome back. Take a moment to check in with yourself - how are you doing right now?",
-    "Hi there. This is your safe space. What's on your mind today?",
-  ],
-  joy: [
-    "That's wonderful to hear! What do you think is contributing to these positive feelings?",
-    "I'm glad you're feeling good! It's important to recognize and savor these moments. What made today special?",
-    "That's great! Positive emotions are worth exploring too. What brings you this joy?",
-  ],
-  sad: [
-    "I hear you. It's okay to feel sad sometimes. Would you like to explore what might be causing these feelings?",
-    "Thank you for sharing that with me. Sadness can be heavy to carry. What do you think is weighing on you?",
-    "I'm here for you. Sometimes naming our feelings helps us process them. What's making you feel this way?",
-  ],
-  anxious: [
-    "Anxiety can be overwhelming. Let's try to understand what's triggering these feelings. What's been on your mind?",
-    "I notice you're feeling anxious. That's a difficult emotion to sit with. What feels most pressing right now?",
-    "It takes courage to acknowledge anxiety. Would you like to talk about what's causing this unease?",
-  ],
-  angry: [
-    "Anger is a valid emotion. It often signals that something important to us has been crossed. What happened?",
-    "I can sense your frustration. Sometimes anger protects us from deeper feelings. What's behind this?",
-    "Thank you for being honest about how you feel. Anger often has important things to tell us. What triggered this?",
-  ],
-  neutral: [
-    "Sometimes neutral is exactly where we need to be. Is there anything specific you'd like to explore today?",
-    "That's okay. Not every day has strong emotions. Is there anything on your mind you'd like to discuss?",
-    "Being in a neutral space can be peaceful. What would you like to focus on in our conversation?",
-  ],
-  followup: [
-    "That's really insightful. How long have you been feeling this way?",
-    "Thank you for sharing that. It sounds like this has been on your mind. What do you think would help?",
-    "I appreciate you opening up. Have you noticed any patterns with when these feelings arise?",
-    "That makes sense. Our feelings often connect to deeper needs. What do you think you need right now?",
-    "I hear you. It's important to acknowledge these feelings. What's one small thing that might bring you comfort?",
-  ],
-};
-
-const detectMood = (text: string): MoodType => {
-  const lower = text.toLowerCase();
-  if (/happy|joy|excited|great|amazing|wonderful|love|fantastic/.test(lower)) return "joy";
-  if (/calm|peaceful|relaxed|serene|content|okay|fine/.test(lower)) return "calm";
-  if (/sad|down|depressed|unhappy|crying|hurt|lonely|miss/.test(lower)) return "sad";
-  if (/anxious|worried|nervous|stressed|overwhelmed|panic|afraid|scared/.test(lower)) return "anxious";
-  if (/angry|frustrated|annoyed|mad|furious|irritated|upset/.test(lower)) return "angry";
-  return "neutral";
-};
-
 export default function SolacePage() {
   const { authenticated, ready, login } = usePrivy();
-  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messageIdRef = useRef(0);
 
-  const [moodStats] = useState<MoodEntry[]>([
-    { mood: "calm", count: 5, percentage: 35 },
-    { mood: "joy", count: 4, percentage: 28 },
-    { mood: "anxious", count: 3, percentage: 21 },
-    { mood: "sad", count: 1, percentage: 8 },
-    { mood: "neutral", count: 1, percentage: 8 },
-  ]);
-
-  const [streak] = useState(5);
-
-  // Initialize with greeting
-  useEffect(() => {
-    if (authenticated && messages.length === 0) {
-      const greeting = therapistResponses.greeting[Math.floor(Math.random() * therapistResponses.greeting.length)];
-      setMessages([{
-        id: `msg-${++messageIdRef.current}`,
-        role: "assistant",
-        content: greeting,
-        timestamp: Date.now(),
-      }]);
-    }
-  }, [authenticated, messages.length]);
+  // Use the real SDK hook
+  const {
+    messages,
+    isLoading,
+    sendMessage,
+    moodStats,
+    insights,
+    currentStreak,
+  } = useSolace();
 
   // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = async () => {
-    if (!input.trim() || isTyping) return;
-
+  const handleSendMessage = async () => {
+    if (!input.trim() || isLoading) return;
     const userMessage = input.trim();
-    const detectedMood = detectMood(userMessage);
     setInput("");
-
-    // Add user message
-    const userMsg: Message = {
-      id: `msg-${++messageIdRef.current}`,
-      role: "user",
-      content: userMessage,
-      timestamp: Date.now(),
-      detectedMood,
-    };
-    setMessages((prev) => [...prev, userMsg]);
-
-    // Simulate typing
-    setIsTyping(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500 + Math.random() * 1000));
-
-    // Get appropriate response
-    const responsePool = messages.length < 3
-      ? therapistResponses[detectedMood]
-      : therapistResponses.followup;
-    const response = responsePool[Math.floor(Math.random() * responsePool.length)];
-
-    const assistantMsg: Message = {
-      id: `msg-${++messageIdRef.current}`,
-      role: "assistant",
-      content: response,
-      timestamp: Date.now(),
-    };
-    setMessages((prev) => [...prev, assistantMsg]);
-    setIsTyping(false);
+    await sendMessage(userMessage);
   };
 
   if (!ready) {
@@ -297,7 +186,7 @@ export default function SolacePage() {
                 ))}
               </AnimatePresence>
 
-              {isTyping && (
+              {isLoading && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -327,13 +216,13 @@ export default function SolacePage() {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                   placeholder="Share what's on your mind..."
                   className="flex-1 px-5 py-3 bg-white border border-purple-100 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
                 <button
-                  onClick={sendMessage}
-                  disabled={!input.trim() || isTyping}
+                  onClick={handleSendMessage}
+                  disabled={!input.trim() || isLoading}
                   className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all"
                 >
                   <Send className="w-5 h-5" />
@@ -361,12 +250,12 @@ export default function SolacePage() {
                   <span className="text-white/80 text-sm">Check-in streak</span>
                   <Calendar className="w-5 h-5 text-white/60" />
                 </div>
-                <div className="text-4xl font-bold mb-2">{streak} days</div>
+                <div className="text-4xl font-bold mb-2">{currentStreak} days</div>
                 <div className="flex gap-1">
                   {[...Array(7)].map((_, i) => (
                     <div
                       key={i}
-                      className={`h-2 flex-1 rounded-full ${i < streak ? "bg-white" : "bg-white/30"}`}
+                      className={`h-2 flex-1 rounded-full ${i < currentStreak ? "bg-white" : "bg-white/30"}`}
                     />
                   ))}
                 </div>
@@ -379,7 +268,7 @@ export default function SolacePage() {
                   <TrendingUp className="w-4 h-4 text-gray-400" />
                 </div>
                 <div className="space-y-3">
-                  {moodStats.map((stat) => {
+                  {moodStats.length > 0 ? moodStats.map((stat) => {
                     const config = moodConfig[stat.mood];
                     const Icon = config.icon;
                     return (
@@ -399,7 +288,9 @@ export default function SolacePage() {
                         </div>
                       </div>
                     );
-                  })}
+                  }) : (
+                    <p className="text-sm text-gray-500">Start chatting to track your mood patterns</p>
+                  )}
                 </div>
               </div>
 
@@ -407,14 +298,31 @@ export default function SolacePage() {
               <div>
                 <h3 className="font-semibold text-gray-900 mb-4">Insights</h3>
                 <div className="space-y-3">
-                  <div className="p-4 bg-purple-50 rounded-xl border border-purple-100">
-                    <p className="text-sm text-purple-900 font-medium mb-1">Pattern Detected</p>
-                    <p className="text-xs text-purple-700">You tend to feel calmer in the mornings. Consider scheduling important tasks early.</p>
-                  </div>
-                  <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
-                    <p className="text-sm text-amber-900 font-medium mb-1">Positive Trend</p>
-                    <p className="text-xs text-amber-700">Your joy entries increased 20% this week compared to last week!</p>
-                  </div>
+                  {insights.length > 0 ? insights.map((insight) => (
+                    <div key={insight.id} className={`p-4 rounded-xl border ${
+                      insight.mood === "anxious" ? "bg-orange-50 border-orange-100" :
+                      insight.mood === "joy" ? "bg-amber-50 border-amber-100" :
+                      "bg-purple-50 border-purple-100"
+                    }`}>
+                      <p className={`text-sm font-medium mb-1 ${
+                        insight.mood === "anxious" ? "text-orange-900" :
+                        insight.mood === "joy" ? "text-amber-900" :
+                        "text-purple-900"
+                      }`}>{insight.title}</p>
+                      <p className={`text-xs ${
+                        insight.mood === "anxious" ? "text-orange-700" :
+                        insight.mood === "joy" ? "text-amber-700" :
+                        "text-purple-700"
+                      }`}>{insight.description}</p>
+                    </div>
+                  )) : (
+                    <>
+                      <div className="p-4 bg-purple-50 rounded-xl border border-purple-100">
+                        <p className="text-sm text-purple-900 font-medium mb-1">Getting Started</p>
+                        <p className="text-xs text-purple-700">Share how you're feeling to begin tracking your emotional patterns.</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.aside>

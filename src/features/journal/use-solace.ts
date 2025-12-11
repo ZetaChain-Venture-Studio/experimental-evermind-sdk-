@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { useChat, useMemory } from "@reverbia/sdk/react";
 import { usePrivy, useIdentityToken } from "@privy-io/react-auth";
 
 const API_BASE_URL = "https://ai-portal-dev.zetachain.com";
@@ -94,31 +93,14 @@ function detectMood(text: string): MoodType {
   return "neutral";
 }
 
-// Helper to convert string content to SDK message format
-function toSdkMessage(role: string, content: string) {
-  return {
-    role: role as "user" | "assistant" | "system",
-    content: [{ type: "text", text: content }],
-  };
-}
-
-// Helper to extract text content from SDK message response
-function extractTextContent(content: Array<{ type?: string; text?: string }> | undefined): string {
-  if (!content || content.length === 0) return "";
-  return content
-    .filter(part => part.type === "text" && part.text)
-    .map(part => part.text)
-    .join("");
-}
-
 export function useSolace(): UseSolaceReturn {
   const [messages, setMessages] = useState<SolaceMessage[]>([]);
   const [storedMemories, setStoredMemories] = useState<Array<{ value: string; createdAt?: number }>>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const messageIdRef = useRef(0);
-  const [streamingContent, setStreamingContent] = useState("");
 
   // Get auth state from Privy
-  const { authenticated, ready, getAccessToken, user } = usePrivy();
+  const { authenticated, ready, user } = usePrivy();
   const { identityToken } = useIdentityToken();
 
   // Log auth state for debugging
@@ -146,34 +128,6 @@ export function useSolace(): UseSolaceReturn {
     }
   }, [ready, authenticated, identityToken, user]);
 
-  // Token getter - identity token only (no fallback to access token)
-  const getToken = useCallback(async (): Promise<string | null> => {
-    if (identityToken) {
-      console.log("[Solace] Using identity token:", identityToken.substring(0, 30) + "...");
-      return identityToken;
-    }
-
-    console.log("[Solace] No identity token available");
-    return null;
-  }, [identityToken]);
-
-  // SDK hooks
-  const { isLoading, sendMessage: sdkSendMessage } = useChat({
-    baseUrl: API_BASE_URL,
-    getToken,
-    onData: (chunk: string) => {
-      setStreamingContent(prev => prev + chunk);
-    },
-    onError: (error: Error) => {
-      console.error("[Solace] Chat error:", error.message);
-    },
-  });
-
-  const { searchMemories } = useMemory({
-    baseUrl: API_BASE_URL,
-    getToken,
-  });
-
   // Add initial greeting
   useEffect(() => {
     if (messages.length === 0) {
@@ -188,10 +142,9 @@ export function useSolace(): UseSolaceReturn {
   }, []);
 
   const sendMessage = useCallback(async (content: string) => {
-    // Check if we're authenticated and have a token
-    const token = await getToken();
-    if (!token) {
-      console.error("[Solace] No token available - user may not be fully authenticated");
+    // Check if we're authenticated and have an identity token
+    if (!identityToken) {
+      console.error("[Solace] No identity token available - user may not be fully authenticated");
 
       // Check what's missing to give a better error message
       const hasWallet = user?.linkedAccounts?.some(a => a.type === "wallet");
@@ -226,30 +179,49 @@ export function useSolace(): UseSolaceReturn {
       detectedMood,
     };
     setMessages(prev => [...prev, userMessage]);
-    setStreamingContent("");
+    setIsLoading(true);
 
-    // Prepare messages for SDK in the correct format
-    const chatHistory = messages.map(m => toSdkMessage(m.role, m.content));
-
-    // Add system prompt and current message
+    // Build messages array for the API
     const apiMessages = [
-      toSdkMessage("system", SOLACE_SYSTEM_PROMPT),
-      ...chatHistory,
-      toSdkMessage("user", content),
+      { role: "system", content: SOLACE_SYSTEM_PROMPT },
+      ...messages.map(m => ({
+        role: m.role,
+        content: m.content,
+      })),
+      { role: "user", content },
     ];
 
     try {
-      const result = await sdkSendMessage({
-        messages: apiMessages,
-        model: "gpt-4o",
+      const url = `${API_BASE_URL}/api/v1/chat/completions`;
+      console.log("[Solace] Sending request to", url);
+      console.log("[Solace] Authorization header: Bearer", identityToken.substring(0, 30) + "...");
+
+      // Make direct fetch call - this will be visible in the Network tab
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${identityToken}`,
+        },
+        body: JSON.stringify({
+          messages: apiMessages,
+          model: "gpt-4o",
+        }),
       });
 
-      if (result.error) {
-        throw new Error(result.error);
+      console.log("[Solace] Response status:", response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[Solace] API error:", errorText);
+        throw new Error(`API error: ${response.status} - ${errorText}`);
       }
 
-      // Extract text from the response
-      const responseContent = extractTextContent(result.data?.choices?.[0]?.message?.content)
+      const data = await response.json();
+      console.log("[Solace] API response:", data);
+
+      // Extract response content
+      const responseContent = data?.choices?.[0]?.message?.content
         || "I'm having trouble responding right now.";
 
       const assistantMessage: SolaceMessage = {
@@ -268,7 +240,7 @@ export function useSolace(): UseSolaceReturn {
         }]);
       }
     } catch (error) {
-      console.error("Chat error:", error);
+      console.error("[Solace] Chat error:", error);
       const errorMessage: SolaceMessage = {
         id: `msg-${++messageIdRef.current}`,
         role: "assistant",
@@ -276,8 +248,10 @@ export function useSolace(): UseSolaceReturn {
         timestamp: Date.now(),
       };
       setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
     }
-  }, [messages, sdkSendMessage, getToken, user, authenticated]);
+  }, [messages, identityToken, user, authenticated]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
