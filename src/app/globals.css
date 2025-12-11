@@ -3,52 +3,43 @@
 @tailwind utilities;
 
 /* ================================================
-   SOLACE Design System - Your Gentle Mind Companion
-   Calm, nurturing, trustworthy, peaceful
+   Evermind AI Demo Showcase - Modern SaaS Design
+   Clean, techie, San Francisco style
    ================================================ */
 
 :root {
-  --radius: 1rem;
+  --radius: 0.75rem;
 
-  /* Warm, calming palette */
-  --background: 30 25% 98%;
-  --foreground: 240 10% 25%;
+  /* Clean, modern palette */
+  --background: 0 0% 100%;
+  --foreground: 224 71% 4%;
 
   --card: 0 0% 100%;
-  --card-foreground: 240 10% 25%;
+  --card-foreground: 224 71% 4%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 25%;
+  --popover-foreground: 224 71% 4%;
 
-  /* Soft lavender - calming, therapeutic */
-  --primary: 252 47% 63%;
+  /* Modern indigo primary */
+  --primary: 239 84% 67%;
   --primary-foreground: 0 0% 100%;
 
-  /* Warm sage - growth, nature */
-  --secondary: 150 20% 70%;
-  --secondary-foreground: 240 10% 25%;
+  /* Cool gray secondary */
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 220 9% 46%;
 
-  --muted: 30 15% 93%;
-  --muted-foreground: 240 5% 50%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 46%;
 
-  /* Soft coral - warmth, emotion */
-  --accent: 15 70% 85%;
-  --accent-foreground: 240 10% 25%;
+  --accent: 220 14% 96%;
+  --accent-foreground: 224 71% 4%;
 
-  --destructive: 0 60% 60%;
+  --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 30 15% 90%;
-  --input: 30 15% 90%;
-  --ring: 252 47% 63%;
-
-  /* Mood colors */
-  --mood-joy: 45 90% 65%;
-  --mood-calm: 200 60% 70%;
-  --mood-sad: 220 40% 60%;
-  --mood-anxious: 30 70% 65%;
-  --mood-angry: 0 60% 60%;
-  --mood-neutral: 240 5% 65%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 239 84% 67%;
 }
 
 /* Base styles */
@@ -57,7 +48,7 @@ html {
 }
 
 body {
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   min-height: 100vh;
@@ -65,7 +56,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Soft, minimal scrollbar */
+/* Minimal scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -86,117 +77,135 @@ body {
 
 /* Typography */
 .font-display {
-  font-family: var(--font-display), Georgia, serif;
-  letter-spacing: -0.02em;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: -0.025em;
 }
 
 .text-display-xl {
-  font-size: clamp(2.5rem, 5vw, 3.5rem);
-  line-height: 1.15;
-  font-weight: 300;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  line-height: 1.1;
+  font-weight: 600;
 }
 
 .text-display-lg {
   font-size: clamp(1.75rem, 4vw, 2.5rem);
   line-height: 1.2;
-  font-weight: 300;
+  font-weight: 600;
 }
 
 .text-display-md {
   font-size: clamp(1.25rem, 3vw, 1.75rem);
   line-height: 1.3;
-  font-weight: 400;
+  font-weight: 500;
 }
 
-/* Gentle gradient backgrounds */
-.gradient-calm {
+/* Modern gradients */
+.gradient-hero {
   background: linear-gradient(
     135deg,
-    hsl(252 47% 95%) 0%,
-    hsl(200 40% 95%) 50%,
-    hsl(150 30% 95%) 100%
+    hsl(239 84% 97%) 0%,
+    hsl(240 100% 98%) 50%,
+    hsl(280 100% 98%) 100%
   );
 }
 
-.gradient-warm {
+.gradient-dark {
   background: linear-gradient(
     135deg,
-    hsl(30 40% 97%) 0%,
-    hsl(15 50% 96%) 100%
+    hsl(224 71% 4%) 0%,
+    hsl(230 20% 10%) 100%
   );
 }
 
-/* Soft card styles */
-.card-soft {
+.gradient-mesh {
+  background-image:
+    radial-gradient(at 40% 20%, hsla(239, 84%, 67%, 0.15) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(280, 100%, 70%, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(200, 100%, 70%, 0.1) 0px, transparent 50%);
+}
+
+/* Modern card */
+.card-modern {
   background: hsl(var(--card));
   border-radius: var(--radius);
   box-shadow:
-    0 1px 3px hsl(240 10% 50% / 0.04),
-    0 4px 12px hsl(240 10% 50% / 0.04);
-  border: 1px solid hsl(var(--border));
+    0 0 0 1px hsl(var(--border)),
+    0 1px 3px hsl(var(--foreground) / 0.04),
+    0 4px 12px hsl(var(--foreground) / 0.02);
+  transition: all 0.2s ease;
 }
 
-.card-soft:hover {
+.card-modern:hover {
   box-shadow:
-    0 2px 6px hsl(240 10% 50% / 0.06),
-    0 8px 24px hsl(240 10% 50% / 0.06);
+    0 0 0 1px hsl(var(--border)),
+    0 4px 12px hsl(var(--foreground) / 0.08),
+    0 16px 32px hsl(var(--foreground) / 0.04);
+  transform: translateY(-2px);
 }
 
-/* Mood indicator dots */
-.mood-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  transition: transform 0.2s ease;
+/* Glass effect */
+.glass {
+  background: hsl(var(--background) / 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--border) / 0.5);
 }
 
-.mood-dot:hover {
-  transform: scale(1.2);
+/* Project card specific */
+.project-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.mood-joy { background-color: hsl(var(--mood-joy)); }
-.mood-calm { background-color: hsl(var(--mood-calm)); }
-.mood-sad { background-color: hsl(var(--mood-sad)); }
-.mood-anxious { background-color: hsl(var(--mood-anxious)); }
-.mood-angry { background-color: hsl(var(--mood-angry)); }
-.mood-neutral { background-color: hsl(var(--mood-neutral)); }
-
-/* Breathing animation for calm effect */
-.breathing {
-  animation: breathing 4s ease-in-out infinite;
+.project-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, hsl(var(--foreground) / 0.02) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-@keyframes breathing {
-  0%, 100% { transform: scale(1); opacity: 0.7; }
-  50% { transform: scale(1.02); opacity: 1; }
+.project-card:hover::before {
+  opacity: 1;
 }
 
-/* Gentle pulse for notifications */
-.gentle-pulse {
-  animation: gentle-pulse 3s ease-in-out infinite;
+.project-card:hover {
+  border-color: hsl(var(--primary) / 0.3);
+  box-shadow:
+    0 8px 30px hsl(var(--primary) / 0.1),
+    0 0 0 1px hsl(var(--primary) / 0.1);
+  transform: translateY(-4px);
 }
 
-@keyframes gentle-pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+/* Glow effect */
+.glow {
+  position: relative;
 }
 
-/* Fade in animation */
-.fade-in {
-  animation: fade-in 0.5s ease-out forwards;
+.glow::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(
+    135deg,
+    hsl(239 84% 67% / 0.4),
+    hsl(280 100% 70% / 0.4),
+    hsl(200 100% 70% / 0.4)
+  );
+  border-radius: inherit;
+  z-index: -1;
+  filter: blur(20px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-@keyframes fade-in {
-  0% { opacity: 0; transform: translateY(8px); }
-  100% { opacity: 1; transform: translateY(0); }
+.glow:hover::after {
+  opacity: 1;
 }
-
-/* Staggered animation delays */
-.stagger-1 { animation-delay: 0.1s; }
-.stagger-2 { animation-delay: 0.2s; }
-.stagger-3 { animation-delay: 0.3s; }
-.stagger-4 { animation-delay: 0.4s; }
-.stagger-5 { animation-delay: 0.5s; }
 
 /* Button styles */
 .btn-primary {
@@ -204,20 +213,18 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.875rem 1.75rem;
+  padding: 0.75rem 1.5rem;
   background: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
   font-weight: 500;
-  letter-spacing: 0.01em;
-  border-radius: 9999px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px hsl(var(--primary) / 0.25);
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
 }
 
 .btn-primary:hover {
-  background: hsl(252 47% 58%);
-  box-shadow: 0 4px 16px hsl(var(--primary) / 0.3);
+  background: hsl(239 84% 60%);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px hsl(var(--primary) / 0.3);
 }
 
 .btn-secondary {
@@ -225,14 +232,13 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.875rem 1.75rem;
+  padding: 0.75rem 1.5rem;
   background: transparent;
   color: hsl(var(--foreground));
-  font-weight: 400;
-  letter-spacing: 0.01em;
+  font-weight: 500;
   border: 1px solid hsl(var(--border));
-  border-radius: 9999px;
-  transition: all 0.3s ease;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
 }
 
 .btn-secondary:hover {
@@ -240,27 +246,59 @@ body {
   border-color: hsl(var(--muted-foreground) / 0.2);
 }
 
-/* Mood chart bar */
-.mood-bar {
-  height: 4px;
-  border-radius: 2px;
-  background: hsl(var(--border));
-  overflow: hidden;
+/* Dating app specific theme */
+.theme-dating {
+  --primary: 340 82% 52%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 340 82% 95%;
 }
 
-.mood-bar-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.5s ease;
+/* Worth AI specific theme */
+.theme-worth {
+  --primary: 142 71% 45%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 142 71% 95%;
 }
 
-/* Insight card */
-.insight-card {
-  padding: 1.25rem;
-  background: linear-gradient(135deg, hsl(252 47% 97%) 0%, hsl(200 40% 97%) 100%);
-  border-radius: var(--radius);
-  border: 1px solid hsl(var(--primary) / 0.1);
+/* Legal Memory specific theme */
+.theme-legal {
+  --primary: 217 91% 60%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 217 91% 95%;
 }
+
+/* Negotiator specific theme */
+.theme-negotiator {
+  --primary: 263 70% 50%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 263 70% 95%;
+}
+
+/* Animations */
+.fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+  animation: slide-up 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slide-up {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Stagger delays */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
 
 /* Focus states */
 *:focus-visible {
@@ -268,13 +306,13 @@ body {
   outline-offset: 2px;
 }
 
-/* Selection color */
+/* Selection */
 ::selection {
   background: hsl(var(--primary) / 0.2);
   color: hsl(var(--foreground));
 }
 
-/* Chat bubble styles */
+/* Chat bubbles */
 .chat-bubble-user {
   background: hsl(var(--primary));
   color: white;
@@ -285,6 +323,23 @@ body {
   background: hsl(var(--muted));
   color: hsl(var(--foreground));
   border-radius: 1.25rem 1.25rem 1.25rem 0.25rem;
+}
+
+/* AI Avatar gradients */
+.avatar-gpt {
+  background: linear-gradient(135deg, #10a37f 0%, #1a7f64 100%);
+}
+
+.avatar-gemini {
+  background: linear-gradient(135deg, #4285f4 0%, #34a853 50%, #fbbc05 100%);
+}
+
+.avatar-grok {
+  background: linear-gradient(135deg, #1d1d1f 0%, #3d3d3f 100%);
+}
+
+.avatar-claude {
+  background: linear-gradient(135deg, #d97706 0%, #ea580c 100%);
 }
 
 /* Typing indicator */
@@ -303,4 +358,28 @@ body {
 @keyframes typing-bounce {
   0%, 60%, 100% { transform: translateY(0); }
   30% { transform: translateY(-4px); }
+}
+
+/* Money/value animation */
+.money-glow {
+  animation: money-glow 2s ease-in-out infinite;
+}
+
+@keyframes money-glow {
+  0%, 100% { filter: drop-shadow(0 0 8px hsl(142 71% 45% / 0.4)); }
+  50% { filter: drop-shadow(0 0 16px hsl(142 71% 45% / 0.6)); }
+}
+
+/* Debate animation */
+.debate-pulse-left {
+  animation: debate-pulse 2s ease-in-out infinite;
+}
+
+.debate-pulse-right {
+  animation: debate-pulse 2s ease-in-out infinite 1s;
+}
+
+@keyframes debate-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.02); opacity: 1; }
 }

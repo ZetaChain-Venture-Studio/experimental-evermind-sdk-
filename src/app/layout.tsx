@@ -1,33 +1,12 @@
 import type { Metadata } from "next";
-import { Inter, Crimson_Pro, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { PrivyAuthProvider } from "@/components/providers/privy-provider";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-sans",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  display: "swap",
-});
-
-const crimsonPro = Crimson_Pro({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Solace - Your Gentle Mind Companion",
-  description: "A safe space to explore your feelings with an AI companion that listens, understands, and helps you grow.",
-  keywords: ["mental health", "mood tracking", "therapy", "AI companion", "wellness", "mindfulness"],
+  title: "Evermind AI - Demo Showcase",
+  description: "Experience the power of AI with memory - Demo applications powered by Evermind AI",
 };
 
 export default function RootLayout({
@@ -37,14 +16,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${crimsonPro.variable} ${jetbrainsMono.variable} antialiased`}
-      >
+      <body className="antialiased">
         <PrivyAuthProvider>
           <ThemeProvider
             attribute="class"
             defaultTheme="light"
-            forcedTheme="light"
             enableSystem={false}
             disableTransitionOnChange
           >
@@ -54,8 +30,8 @@ export default function RootLayout({
               toastOptions={{
                 style: {
                   background: "white",
-                  border: "1px solid hsl(30 15% 90%)",
-                  color: "hsl(240 10% 25%)",
+                  border: "1px solid #e5e7eb",
+                  color: "#1f2937",
                 },
               }}
             />
