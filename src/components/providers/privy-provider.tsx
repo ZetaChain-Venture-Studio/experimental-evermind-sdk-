@@ -7,7 +7,7 @@ export function PrivyAuthProvider({ children }: { children: React.ReactNode }) {
     <PrivyProvider
       appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || "cmhwlx82v000xle0cde4rjy5y"}
       config={{
-        loginMethods: ["wallet", "email"],
+        loginMethods: ["wallet"],
         appearance: {
           theme: "light",
           accentColor: "#8B7EC8",
@@ -15,7 +15,7 @@ export function PrivyAuthProvider({ children }: { children: React.ReactNode }) {
         },
         embeddedWallets: {
           ethereum: {
-            createOnLogin: "users-without-wallets",
+            createOnLogin: "off",
           },
         },
       }}
