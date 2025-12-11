@@ -205,7 +205,7 @@ export function useSolace(): UseSolaceReturn {
         },
         body: JSON.stringify({
           messages: apiMessages,
-          model: "gpt-4o",
+          model: "openai/gpt-4o",
         }),
       });
 
