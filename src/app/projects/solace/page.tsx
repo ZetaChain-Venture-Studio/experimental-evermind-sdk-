@@ -17,6 +17,7 @@ import {
   Zap,
   Flame,
   Minus,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
 import { usePrivy } from "@privy-io/react-auth";
@@ -33,7 +34,7 @@ const moodConfig: Record<MoodType, { icon: typeof Heart; color: string; bgColor:
 };
 
 export default function SolacePage() {
-  const { authenticated, ready, login } = usePrivy();
+  const { authenticated, ready, login, logout } = usePrivy();
   const [input, setInput] = useState("");
   const [showStats, setShowStats] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -132,6 +133,13 @@ export default function SolacePage() {
             className={`p-2 rounded-lg transition-colors ${showStats ? "bg-purple-100 text-purple-600" : "text-gray-500 hover:bg-gray-100"}`}
           >
             <BarChart3 className="w-5 h-5" />
+          </button>
+          <button
+            onClick={logout}
+            className="p-2 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+            title="Log out"
+          >
+            <LogOut className="w-5 h-5" />
           </button>
         </div>
       </header>

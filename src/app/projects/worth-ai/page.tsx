@@ -22,6 +22,7 @@ import {
   Send,
   X,
   MessageCircle,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
 import { usePrivy, useIdentityToken } from "@privy-io/react-auth";
@@ -170,7 +171,7 @@ interface ChatMessage {
 }
 
 export default function WorthAIPage() {
-  const { authenticated, ready, login } = usePrivy();
+  const { authenticated, ready, login, logout } = usePrivy();
   const { identityToken } = useIdentityToken();
   const [phase, setPhase] = useState<"connect" | "calculating" | "dashboard">("connect");
   const [categories, setCategories] = useState<MemoryCategory[]>(initialCategories);
@@ -390,6 +391,13 @@ export default function WorthAIPage() {
           <ArrowLeft className="w-5 h-5" />
           <span>Back</span>
         </Link>
+        <button
+          onClick={logout}
+          className="absolute top-6 right-6 p-2 rounded-lg text-gray-400 hover:bg-red-900/30 hover:text-red-400 transition-colors"
+          title="Log out"
+        >
+          <LogOut className="w-5 h-5" />
+        </button>
 
         <div className="min-h-screen flex flex-col items-center justify-center px-6">
           <motion.div
@@ -492,7 +500,16 @@ export default function WorthAIPage() {
             </div>
             <span className="font-display font-semibold text-gray-900">Worth AI</span>
           </div>
-          <EvermindBadge size="sm" />
+          <div className="flex items-center gap-3">
+            <EvermindBadge size="sm" />
+            <button
+              onClick={logout}
+              className="p-2 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+              title="Log out"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </header>
 

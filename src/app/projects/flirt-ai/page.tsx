@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Send, Sparkles, ArrowLeft } from "lucide-react";
+import { Heart, Send, Sparkles, ArrowLeft, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePrivy, useIdentityToken } from "@privy-io/react-auth";
 import { EvermindBadge } from "@/components/evermind-badge";
@@ -83,7 +83,7 @@ const FLIRT_SYSTEM_PROMPT = `You are a flirty, playful AI personality responding
 Respond in first person as if you're interested in the person asking.`;
 
 export default function FlirtAIPage() {
-  const { authenticated, ready, login } = usePrivy();
+  const { authenticated, ready, login, logout } = usePrivy();
   const { identityToken } = useIdentityToken();
   const [question, setQuestion] = useState("");
   const [girls, setGirls] = useState<AIGirl[]>(initialGirls);
@@ -239,7 +239,16 @@ export default function FlirtAIPage() {
                 <ArrowLeft className="w-5 h-5" />
                 <span>Back</span>
               </Link>
-              <EvermindBadge size="sm" />
+              <div className="flex items-center gap-3">
+                <EvermindBadge size="sm" />
+                <button
+                  onClick={logout}
+                  className="p-2 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                  title="Log out"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </motion.header>
         )}
@@ -259,6 +268,13 @@ export default function FlirtAIPage() {
               <ArrowLeft className="w-5 h-5" />
               <span>Back</span>
             </Link>
+            <button
+              onClick={logout}
+              className="absolute top-6 right-6 p-2 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+              title="Log out"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}

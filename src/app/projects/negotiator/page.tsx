@@ -11,6 +11,7 @@ import {
   Check,
   ThumbsUp,
   ChevronDown,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
 import { usePrivy, useIdentityToken } from "@privy-io/react-auth";
@@ -53,7 +54,7 @@ interface Debater {
 }
 
 export default function NegotiatorPage() {
-  const { authenticated, ready, login } = usePrivy();
+  const { authenticated, ready, login, logout } = usePrivy();
   const { identityToken } = useIdentityToken();
   const [topic, setTopic] = useState("");
   const [forModel, setForModel] = useState<AIModel>(availableModels[0]);
@@ -248,7 +249,16 @@ Remember: You are arguing ${position.toUpperCase()} this topic, regardless of yo
             </div>
             <span className="font-display font-semibold text-gray-900">The Negotiator</span>
           </div>
-          <EvermindBadge size="sm" />
+          <div className="flex items-center gap-3">
+            <EvermindBadge size="sm" />
+            <button
+              onClick={logout}
+              className="p-2 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+              title="Log out"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </header>
 
