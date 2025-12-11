@@ -1,6 +1,6 @@
 "use client";
 
-import { usePrivy } from "@/components/providers/privy-provider";
+import { usePrivy, useLogin, useCreateWallet } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -9,15 +9,33 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
-  const { login, authenticated, ready } = usePrivy();
+  const { authenticated, ready, user } = usePrivy();
+  const { login } = useLogin();
+  const { createWallet } = useCreateWallet();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
+  // After login, create embedded wallet if user doesn't have one (needed for identity token)
   useEffect(() => {
-    if (ready && authenticated) {
-      router.push("/journal");
+    async function ensureWallet() {
+      if (ready && authenticated && user) {
+        const hasWallet = user.linkedAccounts?.some(
+          (account) => account.type === "wallet"
+        );
+        if (!hasWallet) {
+          console.log("[Login] Creating embedded wallet for identity token...");
+          try {
+            await createWallet();
+            console.log("[Login] Wallet created successfully");
+          } catch (e) {
+            console.error("[Login] Failed to create wallet:", e);
+          }
+        }
+        router.push("/journal");
+      }
     }
-  }, [ready, authenticated, router]);
+    ensureWallet();
+  }, [ready, authenticated, user, createWallet, router]);
 
   const handleLogin = () => {
     setIsLoading(true);
