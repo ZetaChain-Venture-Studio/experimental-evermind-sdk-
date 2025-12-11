@@ -146,27 +146,16 @@ export function useSolace(): UseSolaceReturn {
     }
   }, [ready, authenticated, identityToken, user]);
 
-  // Token getter that tries identityToken first, then falls back to accessToken
+  // Token getter - identity token only (no fallback to access token)
   const getToken = useCallback(async (): Promise<string | null> => {
     if (identityToken) {
-      console.log("[Solace] Using identity token");
+      console.log("[Solace] Using identity token:", identityToken.substring(0, 30) + "...");
       return identityToken;
     }
 
-    // Fallback to access token
-    try {
-      const accessToken = await getAccessToken();
-      if (accessToken) {
-        console.log("[Solace] Using access token as fallback");
-        return accessToken;
-      }
-    } catch (e) {
-      console.error("[Solace] Failed to get access token:", e);
-    }
-
-    console.log("[Solace] No token available");
+    console.log("[Solace] No identity token available");
     return null;
-  }, [identityToken, getAccessToken]);
+  }, [identityToken]);
 
   // SDK hooks
   const { isLoading, sendMessage: sdkSendMessage } = useChat({
