@@ -123,13 +123,27 @@ export function useSolace(): UseSolaceReturn {
 
   // Log auth state for debugging
   useEffect(() => {
+    const walletAccount = user?.linkedAccounts?.find(
+      (account) => account.type === "wallet"
+    );
     console.log("[Solace] Auth state:", {
       ready,
       authenticated,
       hasIdentityToken: !!identityToken,
+      identityTokenPreview: identityToken ? identityToken.substring(0, 30) + "..." : null,
       hasUser: !!user,
-      userId: user?.id?.substring(0, 20)
+      userId: user?.id?.substring(0, 20),
+      hasWallet: !!walletAccount,
+      walletAddress: walletAccount?.address?.substring(0, 10),
+      linkedAccountTypes: user?.linkedAccounts?.map(a => a.type),
     });
+
+    // Warn if no identity token despite having a wallet
+    if (authenticated && walletAccount && !identityToken) {
+      console.warn("[Solace] WARNING: User has wallet but no identity token. " +
+        "This usually means identity tokens are not enabled in the Privy dashboard. " +
+        "Go to dashboard.privy.io > Settings > Identity Tokens to enable them.");
+    }
   }, [ready, authenticated, identityToken, user]);
 
   // Token getter that tries identityToken first, then falls back to accessToken
@@ -189,10 +203,23 @@ export function useSolace(): UseSolaceReturn {
     const token = await getToken();
     if (!token) {
       console.error("[Solace] No token available - user may not be fully authenticated");
+
+      // Check what's missing to give a better error message
+      const hasWallet = user?.linkedAccounts?.some(a => a.type === "wallet");
+      let errorContent = "I'm having trouble connecting. ";
+
+      if (!authenticated) {
+        errorContent += "Please log in to continue.";
+      } else if (!hasWallet) {
+        errorContent += "Please connect a wallet to use AI features.";
+      } else {
+        errorContent += "Please try logging out and back in with your wallet.";
+      }
+
       const errorMessage: SolaceMessage = {
         id: `msg-${++messageIdRef.current}`,
         role: "assistant",
-        content: "Please wait a moment while we connect... If this persists, try logging out and back in.",
+        content: errorContent,
         timestamp: Date.now(),
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -261,7 +288,7 @@ export function useSolace(): UseSolaceReturn {
       };
       setMessages(prev => [...prev, errorMessage]);
     }
-  }, [messages, sdkSendMessage, getToken]);
+  }, [messages, sdkSendMessage, getToken, user, authenticated]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
